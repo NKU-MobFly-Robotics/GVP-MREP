@@ -2,13 +2,7 @@
   - [Overview](#1-overview)
   - [Setup](#2-setup)
   - [Parameters](#3-parameters)
-  
-  <!-- - [Quick Start](#quick-start)
-  - [Exploring Different Environments](#exploring-different-environments)
-  - [Known issues](#known-issues)
-    - [Compilation issue](#compilation-issue)
-    - [Unexpected crash](#unexpected-crash)
-  - [Acknowledgements](#acknowledgements) -->
+  - [Acknowledgements](#4-acknowledgements)
 
 
 # GVP-MREP
@@ -32,13 +26,13 @@ This work is developed in Ubuntu 20.04, [ROS noetic](http://wiki.ros.org/noetic/
 
 **Prerequisites**:
 ```
-<!-- git clone https://github.com/google/glog.git
+git clone https://github.com/google/glog.git
 cd glog
 cmake -S . -B build -G "Unix Makefiles"
 cmake --build build
 cmake --build build --target test
 cmake --build build --target install
-# if cmake reports version error: git checkout v0.3.5 -->
+# if cmake reports version error: git checkout v0.3.5
 cd workspace/src
 git clone https://github.com/ethz-asl/gflags_catkin.git
 git clone https://github.com/ethz-asl/glog_catkin.git
@@ -72,5 +66,30 @@ roslaunch murder_swarm murder_swarm_maze4.launch #small maze
 Mamba bless your UAV!
 
 # 3. Parameters
+**Exploration Space**:
+[maze3.resource](murder_swarm/resource/maze3.yaml), [maze3_ground.resource](murder_swarm/resource/maze3.yaml) | 
+[maze4.resource](murder_swarm/resource/maze4.yaml), [maze4_ground.resource](murder_swarm/resource/maze3.yaml)
+```
+# exploration bounding box
+Exp/minX: -20.0
+Exp/minY: -20.0
+Exp/minZ: 0.0
+Exp/maxX: 20.0
+Exp/maxY: 20.0
+Exp/maxZ: 3.0
 
+# map size (larger than the exploration bounding box)
+block_map/minX: -22.5
+block_map/minY: -22.5
+block_map/minZ: -0.1
+block_map/maxX: 22.5
+block_map/maxY: 22.5
+block_map/maxZ: 3.5
+```
+In [maze3.resource](murder_swarm/launch/maze3launch) | [maze4.resource](murder_swarm/launch/maze4.launch).Set the number of swarm:
+```xml
+  <arg name="drone_num" value="10" />
+```
 
+## 4. Acknowledgements
+We use [MINCO](https://github.com/ZJU-FAST-Lab/GCOPTER.git) for trajectory planning.
