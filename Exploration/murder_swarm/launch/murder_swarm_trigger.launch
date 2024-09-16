@@ -1,0 +1,6 @@
+<launch>
+
+    <node name="swarm_trigger" pkg="murder_swarm" type="swarm_trigger" output="screen">
+    </node>
+
+</launch>

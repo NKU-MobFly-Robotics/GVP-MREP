@@ -1,0 +1,44 @@
+<launch>
+
+  <arg name="drone_id" default="2"/>
+
+
+
+  <node pkg="swarm_exp_bridge" name="drone_$(arg drone_id)_bridge_exp_tcp" type="swarm_exp_bridge_tcp" output="screen">
+    <!-- SUBSCRIBE -->
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/traj_send" to="/drone_$(arg drone_id)/traj_send" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/pose_send" to="/drone_$(arg drone_id)/pose_send" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/DTG_send" to="/drone_$(arg drone_id)/DTG_send" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/DTGAns_send" to="/drone_$(arg drone_id)/DTGAns_send" />
+
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/takeoff" to="/takeoff" />
+
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/local_odoms" to="/multisim_local/states" />
+
+    <!-- PUBLISH -->
+    <!-- <remap from="/drone_$(arg drone_id)_bridge_node_tcp/swarm_odoms" to="/communication/states" /> -->
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/traj_rec" to="/drone_$(arg drone_id)/traj_rec" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/pose_rec" to="/drone_$(arg drone_id)/pose_rec" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/DTG_rec" to="/drone_$(arg drone_id)/DTG_rec" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/DTGAns_rec" to="/drone_$(arg drone_id)/DTGAns_rec" />
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/takeoffself" to="/drone_$(arg drone_id)/takeoff" />
+
+    <remap from="/drone_$(arg drone_id)_bridge_exp_tcp/swarm_odoms" to="/communication/states" />
+
+
+    
+    <param name="max_tolerable_delay" value="0.25"/>
+
+    <param name="self_id" value="$(arg drone_id)"/>
+    <param name="is_ground_station" value="false"/>
+
+    <param name="drone_num"  value="2"/>
+    <param name="drone_ip_1" value="192.168.168.201" type="string"/>
+    <param name="drone_ip_2" value="192.168.168.200" type="string"/>
+
+    <param name="ground_station_num" value="0"/>
+    <!-- <param name="ground_station_ip_0" value="127.0.0.1" type="string"/> -->
+    
+  </node>
+
+</launch>

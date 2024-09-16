@@ -1,0 +1,41 @@
+<launch>
+  <arg name="id" default="0"/>
+    <arg name="drone_num" default="3" />
+    <arg name="use_rviz" value="false" />
+    <arg name="world"/>
+
+    <node name="ground_node" pkg="murder_swarm" type="ground_node" output="screen">
+        <rosparam command="load" file="$(find block_map)/color/Paranoid.yaml" />
+        <rosparam command="load" file="$(find murder_swarm)/resource/murder_$(arg world)_ground.yaml" />
+        <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
+        <param name="Exp/UAV_id" value="$(arg id)" type="int"/>
+        <param name="Exp/drone_num" value="$(arg drone_num)" type="int"/>
+
+        <!-- <remap from="/depth" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/disparity"/>
+        <remap from="/odom" to="/firefly$(arg id)/ground_truth/odometry"/>
+        <remap from="/vi_odom" to="/firefly$(arg id)/vi_sensor/ground_truth/odometry"/>
+        <remap from="/block_map/caminfo" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/camera_info"/>
+        <remap from="/Murder/Traj" to="/Murder/Traj$(arg id)"/>
+        <remap from="/Murder/Show" to="/Murder/Show$(arg id)"/> -->
+
+        <remap from="/drone_$(arg id)/pose_send" to="/Communication/pose_send"/>
+        <remap from="/drone_$(arg id)/DTG_send" to="/Communication/DTG_send"/>
+        <remap from="/drone_$(arg id)/traj_send" to="/Communication/traj_send"/>
+        <remap from="/drone_$(arg id)/job_send" to="/Communication/job_send"/>
+        <remap from="/drone_$(arg id)/state_send" to="/Communication/state_send"/>
+        <remap from="/drone_$(arg id)/DTGAns_send" to="/Communication/DTGAns_send"/>
+        <remap from="/drone_$(arg id)/map_send" to="/Communication/map_send"/>
+        <remap from="/drone_$(arg id)/mapreq_send" to="/Communication/mapreq_send"/>
+
+        <remap from="/drone_$(arg id)/pose_rec" to="/Communication/pose_rec"/>
+        <remap from="/drone_$(arg id)/DTG_rec" to="/Communication/DTG_rec"/>
+        <remap from="/drone_$(arg id)/traj_rec" to="/Communication/traj_rec"/>
+        <remap from="/drone_$(arg id)/job_rec" to="/Communication/job_rec"/>
+        <remap from="/drone_$(arg id)/state_rec" to="/Communication/state_rec"/>
+        <remap from="/drone_$(arg id)/DTGAns_rec" to="/Communication/DTGAns_rec"/>
+        <remap from="/drone_$(arg id)/map_rec" to="/Communication/map_rec"/>
+    </node>
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find murder_swarm)/rviz/ground_demo.rviz" if="$(eval arg('use_rviz'))"/>
+
+</launch>

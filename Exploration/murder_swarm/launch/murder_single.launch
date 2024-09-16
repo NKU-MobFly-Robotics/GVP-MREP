@@ -1,0 +1,67 @@
+<launch>
+    <arg name="drone_num" />
+    <arg name="id" />
+    <arg name="init_x" />
+    <arg name="init_y" />
+    <arg name="init_z" />
+    <arg name="world"/>
+
+
+    <node name="murder_$(arg id)" pkg="murder_swarm" type="murder_swarm_node" output="screen">
+        <rosparam command="load" file="$(find block_map)/color/Paranoid.yaml" />
+        <rosparam command="load" file="$(find murder_swarm)/resource/murder_$(arg world).yaml" />
+        <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
+        <param name="Exp/UAV_id" value="$(arg id)" type="int"/>
+        <param name="Exp/drone_num" value="$(arg drone_num)" type="int"/>
+        <param name="Exp/takeoff_x" value="$(arg init_x)" />
+        <param name="Exp/takeoff_y" value="$(arg init_y)" />
+        <param name="Exp/takeoff_z" value="1.0" />
+
+        <remap from="/depth" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/disparity"/>
+        <remap from="/pointcloud" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/points"/>
+        <remap from="/odom" to="/firefly$(arg id)/ground_truth/odometry"/>
+        <remap from="/vi_odom" to="/firefly$(arg id)/vi_sensor/ground_truth/odometry"/>
+        <remap from="/block_map/caminfo" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/camera_info"/>
+        <remap from="/Murder/Traj" to="/Murder/Traj$(arg id)"/>
+        <remap from="/Murder/Show" to="/Murder/Show$(arg id)"/>
+
+        <remap from="/drone_$(arg id)/pose_send" to="/Communication/pose_send"/>
+        <remap from="/drone_$(arg id)/DTG_send" to="/Communication/DTG_send"/>
+        <remap from="/drone_$(arg id)/traj_send" to="/Communication/traj_send"/>
+        <remap from="/drone_$(arg id)/job_send" to="/Communication/job_send"/>
+        <remap from="/drone_$(arg id)/state_send" to="/Communication/state_send"/>
+        <remap from="/drone_$(arg id)/DTGAns_send" to="/Communication/DTGAns_send"/>
+        <remap from="/drone_$(arg id)/map_send" to="/Communication/map_send"/>
+
+        <remap from="/drone_$(arg id)/pose_rec" to="/Communication/pose_rec"/>
+        <remap from="/drone_$(arg id)/DTG_rec" to="/Communication/DTG_rec"/>
+        <remap from="/drone_$(arg id)/traj_rec" to="/Communication/traj_rec"/>
+        <remap from="/drone_$(arg id)/job_rec" to="/Communication/job_rec"/>
+        <remap from="/drone_$(arg id)/state_rec" to="/Communication/state_rec"/>
+        <remap from="/drone_$(arg id)/DTGAns_rec" to="/Communication/DTGAns_rec"/>
+        <remap from="/drone_$(arg id)/map_rec" to="/Communication/map_rec"/>
+        <remap from="/drone_$(arg id)/mapreq_rec" to="/Communication/mapreq_rec"/>
+
+
+    </node>
+        <!-- if="$(eval arg('id') >= 2)" -->
+    <node name="traj_exc_node$(arg id)" pkg="traj_exc" type="traj_exc_node" output="screen">
+        <rosparam command="load" file="$(find murder_swarm)/resource/murder_$(arg world).yaml" />
+        <remap from="/odom" to="/firefly$(arg id)/ground_truth/odometry"/>
+        <remap from="/trajectory_cmd" to="/Murder/Traj$(arg id)"/>
+        <remap from="/command/trajectory" to="/firefly$(arg id)/command/trajectory"/>
+        
+        <param name="Exp/takeoff_x" value="$(arg init_x)" />
+        <param name="Exp/takeoff_y" value="$(arg init_y)" />
+        <param name="Exp/takeoff_z" value="1.0" />
+    </node>
+
+    <include file="$(find murder_swarm)/launch/uav_model.launch">
+        <arg name="id" value="$(arg id)"/>
+        <arg name="waypoint_x" value="$(arg init_x)" />
+        <arg name="waypoint_y" value="$(arg init_y)" />
+        <arg name="waypoint_z" value="$(arg init_z)" />
+    </include>
+
+
+</launch>

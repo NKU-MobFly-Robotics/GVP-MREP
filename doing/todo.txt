@@ -1,0 +1,19 @@
+1. blockmap 的体素和frontier origin对齐
+2. Coarse Expand 在地图边界报错
+[ WARN] [1715840627.584242218, 4727.606000000]: id:8 local plan!
+id:8hn_l:3  lowbd:13.9041 -11.655  -3.196   upbd:29.4041 3.84498  12.304
+id:8exp_state:0   24.1953  -5.595 2.67691 2.51327
+*** Aborted at 1715840627 (unix time) try "date -d @1715840627" if you are using GNU date ***
+PC: @     0x7f517a2ce758 lowres::LowResMap::CoarseExpand()
+*** SIGSEGV (@0x2a59) received by PID 132318 (TID 0x7f516b569640) from PID 10841; stack trace: ***
+    @     0x7f517ae78631 (unknown)
+    @     0x7f517aea5420 (unknown)
+    @     0x7f517a2ce758 lowres::LowResMap::CoarseExpand()
+    @     0x7f517a2db8ee lowres::LowResMap::FindCorridors()
+    @     0x7f517a72e2ae Murder::TrajPlanB()
+    @     0x7f517a73103b Murder::LocalPlan()
+38 63  2  -1
+map_upbd_:24.7999 24.7999  6.3999
+map_lowbd_:-25.5999 -25.5999  -1.5999
+
+3. Gain area cos_phi needs to be modified, and the parameter needs to be tuned

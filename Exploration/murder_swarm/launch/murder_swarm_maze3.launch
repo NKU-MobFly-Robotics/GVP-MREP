@@ -1,0 +1,120 @@
+<launch>
+  <arg name="world" default="maze3" />
+  <arg name="gui" default="true" />
+  <arg name="drone_num" value="10" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find multisim_gazebo)/worlds/$(arg world).world" />
+    <arg name="use_sim_time" value="true"/>
+    <arg name="paused" value="false"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+  <include file="$(find swarm_exp_bridge)/launch/local_tcp.launch">
+    <arg name="sim_id" value="1" />
+    <arg name="sim_num" value="$(arg drone_num)" />
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_ground_demo.launch">
+    <arg name="id" value="0"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="drone_num" value="$(arg drone_num)" />
+  </include>
+
+  <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find murder_swarm)/rviz/murder_swarm_local.rviz"/> -->
+  <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find murder_swarm)/rviz/ground_demo.rviz"/>
+
+ <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 1)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="1"/>
+    <arg name="init_x"   value="0"/>
+    <arg name="init_y"   value="0"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 2)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="2"/>
+    <arg name="init_x"   value="0"/>
+    <arg name="init_y"   value="1.5"/>
+    <arg name="init_z"   value="0.75"/> 
+  </include>
+
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 3)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="3"/>
+    <arg name="init_x"   value="0"/>
+    <arg name="init_y"   value="-1.5"/>
+    <arg name="init_z"   value="0.75"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 4)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="4"/>
+    <arg name="init_x"   value="0"/>
+    <arg name="init_y"   value="3"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 5)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="5"/>
+    <arg name="init_x"   value="0"/>
+    <arg name="init_y"   value="-3"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+
+
+
+ <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 6)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="6"/>
+    <arg name="init_x"   value="-1.5"/>
+    <arg name="init_y"   value="0"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 7)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="7"/>
+    <arg name="init_x"   value="-1.5"/>
+    <arg name="init_y"   value="1.5"/>
+    <arg name="init_z"   value="0.75"/> 
+  </include>
+
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 8)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="8"/>
+    <arg name="init_x"   value="-1.5"/>
+    <arg name="init_y"   value="-1.5"/>
+    <arg name="init_z"   value="0.75"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 9)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="9"/>
+    <arg name="init_x"   value="-1.5"/>
+    <arg name="init_y"   value="3"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_single.launch" if="$(eval arg('drone_num') >= 10)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="10"/>
+    <arg name="init_x"   value="-1.5"/>
+    <arg name="init_y"   value="-3"/>
+    <arg name="init_z"   value="1.25"/> 
+  </include>
+</launch>

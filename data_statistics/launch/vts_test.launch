@@ -1,0 +1,12 @@
+<launch>
+
+    <include file="$(find data_statistics)/launch/vt_statistician.launch">
+        <arg name="depthimg_topic" default="/firefly/vi_sensor/camera_depth/depth/disparity" />
+        <arg name="pcl_topic" default="/firefly/vi_sensor/camera_depth/depth/points" />
+        <arg name="odom_topic" default="/firefly/vi_sensor/ground_truth/odometry" />
+        <arg name="explore_param" default="explore_maze4" />
+        <arg name="resolution" default="0.2" />
+        <arg name="mapcolor" default="Powerslave" />
+    </include>
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find data_statistics)/rviz/vts.rviz" />
+</launch>

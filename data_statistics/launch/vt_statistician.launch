@@ -1,0 +1,22 @@
+<launch>
+    <arg name="depthimg_topic" default="/d400/depth/image_rect_raw_throttle" />
+    <arg name="pcl_topic" default="/depth/points" />
+    <arg name="odom_topic" default="/t265/odom/sample" />
+    <arg name="explore_param" default="real3" />
+    <arg name="resolution" default="0.1" />
+    <arg name="mapcolor" default="Powerslave" />
+
+    <node name="statistics" pkg="data_statistics" type="vts_node">
+        <rosparam command="load" file="$(find octomap_world)/color/$(arg mapcolor).yaml" />
+        <rosparam command="load" file="$(find planning_graph)/resource/$(arg explore_param).yaml" />
+        <remap from="/robot_odom" to="$(arg odom_topic)"/>
+        <remap from="/sensor_img" to="$(arg depthimg_topic)"/>
+        <remap from="/sensor_pcl" to="$(arg pcl_topic)"/>
+        <param name="tf_frame" type="string" value="world" />
+        <param name="max_free_space" type="double" value="5.0" />
+        <param name="resolution" type="double" value="$(arg resolution)" />
+        <param name="sensor_max_range" type="double" value="5.0" />
+        <param name="map_publish_frequency" type="double" value="0.0" />
+        <param name="probability_hit" type="double" value="0.8" />
+    </node>
+</launch>

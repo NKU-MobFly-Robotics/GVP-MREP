@@ -1,0 +1,14 @@
+<launch>
+
+    <node name="fov_ray_test" pkg="ato_test" type="fov_ray_test" output="screen">
+        <rosparam command="load" file="$(find block_map)/color/Paranoid.yaml" />
+        <rosparam command="load" file="$(find murder_swarm)/resource/murder_maze4.yaml" />
+        <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
+        <remap from="/depth" to="/firefly/vi_sensor/camera_depth/depth/disparity"/>
+        <remap from="/odom" to="/firefly/vi_sensor/ground_truth/odometry"/>
+        <remap from="/block_map/caminfo" to="/firefly/vi_sensor/camera_depth/depth/camera_info"/>
+    </node>
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find ato_test)/rviz/fov_gain.rviz" />
+
+</launch>

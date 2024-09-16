@@ -1,0 +1,60 @@
+<launch>
+
+  <arg name="sim_id" default="1"/>
+  <arg name="sim_num" default="1"/>
+
+
+
+  <node pkg="swarm_exp_bridge" name="sim$(arg sim_id)_bridge_exp_tcp_sim" type="swarm_exp_bridge_tcp_sim" output="screen">
+    <!-- SUBSCRIBE -->
+
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/traj_send" to="/Communication/traj_send" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/pose_send" to="/Communication/pose_send" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/DTG_send" to="/Communication/DTG_send" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/DTGAns_send" to="/Communication/DTGAns_send" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/job_send" to="/Communication/job_send"/>
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/state_send" to="/Communication/state_send"/>
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/map_send" to="/Communication/map_send"/>
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/mapreq_send" to="/Communication/mapreq_send"/>
+
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/takeoff" to="/takeoff" />
+
+    <!-- multi-Gazebo sim -->
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/local_odoms" to="/Communication/states" />
+
+    <!-- PUBLISH -->
+    <!-- <remap from="/sim$(arg sim_id)_bridge_node_tcp/swarm_odoms" to="/communication/states" /> -->
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/traj_rec" to="/Communication/traj_rec" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/pose_rec" to="/Communication/pose_rec" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/DTG_rec" to="/Communication/DTG_rec" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/DTGAns_rec" to="/Communication/DTGAns_rec" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/job_rec" to="/Communication/job_rec" />
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/state_rec" to="/Communication/state_rec"/>
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/map_rec" to="/Communication/map_rec"/>
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/mapreq_rec" to="/Communication/mapreq_rec"/>
+
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/takeoffself" to="/Communication/takeoff" />
+
+    <!-- multi-Gazebo sim -->
+    <remap from="/sim$(arg sim_id)_bridge_exp_tcp_sim/swarm_odoms" to="/Communication/states" />
+
+    
+    <param name="max_tolerable_delay" value="0.25"/>
+
+    <param name="self_id" value="$(arg sim_id)"/>
+    <param name="is_ground_station" value="true"/>
+
+    <param name="computer_num"  value="1"/>
+    <param name="drone_num"  value="3"/>
+
+    <param name="sim_ip_1" value="192.168.168.201" type="string"/>
+    <param name="sim_num_1" value="$(arg sim_num)"/>
+
+    <!-- <param name="drone_ip_2" value="192.168.168.200" type="string"/> -->
+
+    <param name="ground_station_num" value="0"/>
+    <!-- <param name="ground_station_ip_0" value="127.0.0.1" type="string"/> -->
+    
+  </node>
+
+</launch>

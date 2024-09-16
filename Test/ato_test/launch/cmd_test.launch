@@ -1,0 +1,76 @@
+<launch>
+
+    <node name="cmd_repub1" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send1"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub1"/>
+    </node>
+
+    <node name="cmd_test1" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub1"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="1"/>
+    </node>
+
+
+    <node name="cmd_repub2" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send2"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub2"/>
+    </node>
+
+    <node name="cmd_test2" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub2"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="2"/>
+    </node>
+
+
+    <node name="cmd_repub3" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send3"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub3"/>
+    </node>
+
+    <node name="cmd_test3" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub3"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="3"/>
+    </node>
+
+
+    <node name="cmd_repub4" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send4"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub4"/>
+    </node>
+
+    <node name="cmd_test4" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub4"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="4"/>
+    </node>
+
+
+    <node name="cmd_repub5" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send5"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub5"/>
+    </node>
+
+    <node name="cmd_test5" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub5"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="5"/>
+    </node>
+
+
+    <node name="cmd_repub6" pkg="ato_test" type="cmd_repub" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_send6"/>
+        <remap from="/traj_repub" to="/Communication/traj_repub6"/>
+    </node>
+
+    <node name="cmd_test6" pkg="ato_test" type="cmd_test" output="screen">
+        <remap from="/trajectory_cmd" to="/Communication/traj_repub6"/>
+        <param name="drone_num"  value="7"/>
+        <param name="drone_id"  value="6"/>
+    </node>
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find ato_test)/rviz/cmd_test.rviz" />
+
+</launch>

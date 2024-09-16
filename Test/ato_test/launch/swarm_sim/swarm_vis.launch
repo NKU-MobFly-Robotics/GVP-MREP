@@ -1,0 +1,38 @@
+<launch>
+  <arg name="world" default="maze3" />
+  <arg name="gui" default="true" />
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find multisim_gazebo)/worlds/$(arg world).world" />
+        <arg name="use_sim_time" value="true"/>
+        <arg name="paused" value="false"/>
+        <arg name="gui" value="$(arg gui)"/>
+    </include>
+
+    <include file="$(find multisim_gazebo)/launch/rotors_sim.launch">
+        <arg name="id" value="1" />
+        <arg name="waypoint_x" value="0.0" />
+        <arg name="waypoint_y" value="0.0" />
+        <arg name="waypoint_z" value="0.0" />
+    </include>
+
+    <include file="$(find multisim_gazebo)/launch/rotors_hull_sim.launch">
+        <arg name="id" value="2" />
+        <arg name="waypoint_x" value="0.0" />
+        <arg name="waypoint_y" value="1.0" />
+        <arg name="waypoint_z" value="0.0" />
+    </include>
+
+    <node name="swarm_data_test" pkg="ato_test" type="swarm_data_test" output="screen">
+        <rosparam command="load" file="$(find block_map)/color/Paranoid.yaml" />
+        <rosparam command="load" file="$(find ato_test)/resource/multirobots.yaml" />
+        <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
+        <rosparam command="load" file="$(find ato_test)/resource/multi_robots_gazebo.yaml" />
+        
+        <remap from="/depth" to="/firefly1/vi_sensor/camera_depth/depth/disparity"/>
+        <remap from="/command/trajectory" to="//firefly1/command/trajectory"/>
+        <remap from="/odom" to="/firefly1/vi_sensor/ground_truth/odometry"/>
+        <remap from="/block_map/caminfo" to="/firefly1/vi_sensor/camera_depth/depth/camera_info"/>
+    </node>
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find ato_test)/rviz/swarm_test.rviz" />
+
+</launch>

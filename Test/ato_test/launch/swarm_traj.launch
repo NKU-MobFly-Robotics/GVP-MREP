@@ -1,0 +1,9 @@
+<launch>
+
+    <node name="traj_swarm" pkg="ato_test" type="traj_swarm" output="screen">
+        <rosparam command="load" file="$(find ato_test)/resource/multirobots.yaml" />
+    </node>
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find ato_test)/rviz/swarm_traj.rviz" />
+
+</launch>

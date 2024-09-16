@@ -1,0 +1,10 @@
+/opt/MaxVel: 2.0
+/opt/MaxAcc: 2.0
+/opt/WeiPos: 10000.0
+/opt/WeiVel: 1000.0
+/opt/WeiAcc: 1000.0
+/opt/WeiminT: 500.0
+/opt/WeiT: 100.0
+/opt/smoothingEps: 0.01
+/opt/integralIntervs: 16
+/opt/RelCostTolL: 1.0e-5
