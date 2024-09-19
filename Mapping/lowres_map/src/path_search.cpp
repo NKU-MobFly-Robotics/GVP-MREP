@@ -157,6 +157,7 @@ bool LowResMap::Astar(const Eigen::Vector3d &start, const Eigen::Vector3d &end, 
         if(!IsFeasible(start) || !IsFeasible(end)){
             FreeWorker(workid, node_list);
             cout<<IsFeasible(start)<<" "<<IsFeasible(end)<<endl;
+            cout<<start.transpose()<<" "<<end.transpose()<<endl;
             ROS_WARN("error IsFeasible");
             return false;
         }
@@ -447,6 +448,7 @@ bool LowResMap::DjkstraLocalDist(const Eigen::Vector3d &start, list<list<Eigen::
         length_e = (path.front() - p).norm();
         path.emplace_back(start);
         path.emplace_front(p);
+        if(!IsFeasible(p)) ROS_ERROR("error end feasible!");
         if(PrunePath(path, path_prune, length)){
             reverse(path.begin(), path.end());
             paths.emplace_back(path);

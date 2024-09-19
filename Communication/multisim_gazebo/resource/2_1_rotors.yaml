@@ -1,0 +1,6 @@
+multirotors/robot_num: 2
+multirotors/local_num: 1
+multirotors/local_ids: [2] #  > 1
+multirotors/basic_names: ["firefly2/odometry_sensor1"] 
+multirotors/model_names: ["firefly1", "firefly2"]
+multirotors/set_freq: 20.0

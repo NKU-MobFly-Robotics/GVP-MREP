@@ -1,0 +1,26 @@
+<launch>
+  <arg name="mav_name" default="firefly" />
+  <arg name="id" default="1" />
+  <arg name="waypoint_x" default="0.0" />
+  <arg name="waypoint_y" default="0.0" />
+  <arg name="waypoint_z" default="0.0" />
+  <arg name="subscript" default="" />
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+  <group ns="$(arg mav_name)$(arg id)">
+    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+      <arg name="namespace" value="$(arg mav_name)$(arg id)" />
+      <arg name="mav_name" value="$(arg mav_name)$(arg subscript)" />
+      <arg name="model" value="$(find rotors_description)/urdf/firefly_hull.xacro" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="log_file" value="$(arg log_file)"/>
+      <arg name="x" value="$(arg waypoint_x)"/>
+      <arg name="y" value="$(arg waypoint_y)"/>
+      <arg name="z" value="0.5"/>
+      <!--arg name="tf_prefix" default="$(arg mav_name)$(arg subscript)"/-->
+    </include>
+  </group>
+
+</launch>

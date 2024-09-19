@@ -377,7 +377,7 @@ void FrontierGrid::InitGainRays(){
     Eigen::Vector4d vp;
     double dtheta = cam_hor_ / FOV_h_num_;
     double dphi = cam_ver_ / FOV_v_num_;
-    double cos_phi = cos(dphi);
+    double cos_phi;
     double sin_2_dphi = sin(dphi / 2);
 
     for(int v_id = 0; v_id < samp_num_; v_id++){
@@ -386,11 +386,6 @@ void FrontierGrid::InitGainRays(){
             ros::shutdown();
         }
         if(sensor_type_ == SensorType::CAMERA){
-            dtheta = cam_hor_ / FOV_h_num_;
-            dphi = cam_ver_ / FOV_v_num_;
-            cos_phi = cos(dphi);
-            sin_2_dphi = sin(dphi / 2);
-            
             for(int h = 0; h < FOV_h_num_; h++){
                 double h_dir = vp(3) + double(h) / FOV_h_num_ * cam_hor_ - cam_hor_ / 2;
                 for(int v = 0; v < FOV_v_num_; v++){
@@ -400,7 +395,7 @@ void FrontierGrid::InitGainRays(){
                     list<Eigen::Vector3d> ray1;
                     list<pair<Eigen::Vector3d, double>> ray2;
                     Eigen::Vector3d dir;
-                    // cos_phi = cos(v_dir);
+                    cos_phi = cos(v_dir);
                     dir(0) = cos(h_dir) * cos(v_dir);
                     dir(1) = sin(h_dir) * cos(v_dir);
                     dir(2) = sin(v_dir);
@@ -437,7 +432,7 @@ void FrontierGrid::InitGainRays(){
                     }
                     if(valid_ray && ray2.size() > 0){
                         gain_rays_[v_id].push_back({ray1, ray2});
-                        gain_dirs_[v_id].push_back({dir * l_gain + vp.block(0, 0, 3, 1), 2*dtheta*sin_2_dphi*cos_phi*pow(l_gain, 2)});
+                        gain_dirs_[v_id].push_back({dir * l_gain + vp.block(0, 0, 3, 1), 2*dtheta*sin_2_dphi*cos_phi});
                     }
                 }
             }
@@ -445,7 +440,6 @@ void FrontierGrid::InitGainRays(){
         else if(sensor_type_ == SensorType::LIVOX){
             dtheta = M_PI * 2 / FOV_h_num_;
             dphi = (livox_ver_up_ - livox_ver_low_) / FOV_v_num_;
-            cos_phi = cos(dphi);
             sin_2_dphi = sin(dphi / 2);
             for(int h = 0; h < FOV_h_num_; h++){
                 double h_dir = vp(3) + double(h) / FOV_h_num_ * M_PI * 2 - M_PI;
@@ -456,7 +450,7 @@ void FrontierGrid::InitGainRays(){
                     list<Eigen::Vector3d> ray1;
                     list<pair<Eigen::Vector3d, double>> ray2;
                     Eigen::Vector3d dir;
-                    // cos_phi = cos(v_dir);
+                    cos_phi = cos(v_dir);
                     dir(0) = cos(h_dir) * cos(v_dir);
                     dir(1) = sin(h_dir) * cos(v_dir);
                     dir(2) = sin(v_dir);
@@ -493,7 +487,7 @@ void FrontierGrid::InitGainRays(){
                     }
                     if(valid_ray && ray2.size() > 0){
                         gain_rays_[v_id].push_back({ray1, ray2});
-                        gain_dirs_[v_id].push_back({dir * l_gain + vp.block(0, 0, 3, 1), 2*dtheta*sin_2_dphi*cos_phi * pow(l_gain, 2)});
+                        gain_dirs_[v_id].push_back({dir * l_gain + vp.block(0, 0, 3, 1), 2*dtheta*sin_2_dphi*cos_phi});
                     }
                 }
             }

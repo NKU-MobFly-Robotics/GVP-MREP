@@ -54,9 +54,9 @@ block_map/pro_miss_free: 0.75
 block_map/statistic_v_: true
 
 EXP/finish_hold_duration: 15.0
-Exp/robot_sizeX: 0.5
-Exp/robot_sizeY: 0.5
-Exp/robot_sizeZ: 0.5
+Exp/robot_sizeX: 0.48
+Exp/robot_sizeY: 0.48
+Exp/robot_sizeZ: 0.3
 Exp/minX: -20.0
 Exp/minY: -20.0
 Exp/minZ: 0.0

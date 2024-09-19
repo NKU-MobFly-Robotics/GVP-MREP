@@ -58,6 +58,7 @@ block_map/pro_hit_occ: 0.90
 block_map/pro_miss_free: 0.75
 block_map/statistic_v: true
 block_map/show_block: true
+block_map/vis_mode: false
 block_map/min_finish_t: 50.0
 
 Exp/show_swarm_traj: false
@@ -85,7 +86,7 @@ Exp/takeoff_yaw: 0.0
 Exp/reach_out_t: 0.1
 Exp/AutoTakeoff: true
 Exp/statistic: true
-Exp/finish_thresh: 0.69
+Exp/finish_thresh: 0.5
 
 #swarm
 # Exp/UAV_id: 1

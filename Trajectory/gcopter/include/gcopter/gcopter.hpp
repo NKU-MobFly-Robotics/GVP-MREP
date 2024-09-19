@@ -719,6 +719,10 @@ namespace gcopter
             obj.minco.getEnergy(cost);
             obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);
             obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);
+            cost *= 0.1;
+            obj.partialGradByCoeffs *= 0.1;
+            obj.partialGradByTimes *= 0.1;
+
 
             attachPenaltyFunctional(obj.times, obj.minco.getCoeffs(),
                                     obj.hPolyIdx, obj.hPolytopes,
@@ -730,7 +734,8 @@ namespace gcopter
             obj.minco.propogateGrad(obj.partialGradByCoeffs, obj.partialGradByTimes,
                                     obj.gradByPoints, obj.gradByTimes);
 
-            if(smoothedL1(obj.minT - obj.times.sum(), 0.1, fminT, dfminT)){
+            double viola_t = obj.minT - obj.times.sum(); 
+            if(smoothedL1(viola_t, 0.01, fminT, dfminT)){
                 cost += weightminT * fminT;
                 obj.gradByTimes.array() -= dfminT * weightminT;
             }
@@ -1130,6 +1135,13 @@ namespace gcopter
                 forwardP(xi, vPolyIdx, vPolytopes, points);
                 minco.setParameters(points, times);
                 minco.getTrajectory(traj);
+            }
+            else if(ret == lbfgs::LBFGSERR_MAXIMUMLINESEARCH){
+                forwardT(tau, times);
+                forwardP(xi, vPolyIdx, vPolytopes, points);
+                minco.setParameters(points, times);
+                minco.getTrajectory(traj);
+                std::cout<<"exceed max iter!!!!!!!!!!!!"<<std::endl;
             }
             else
             {

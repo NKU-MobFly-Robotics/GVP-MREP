@@ -97,7 +97,7 @@ void Murder::BroadCastFinish(){
     static bool debug_vp = false;
     if(!debug_vp){
         debug_vp = true;
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 5; i++){
             ROS_ERROR("id: %d, finish!!!", SDM_.self_id_);
         }
     }
@@ -242,12 +242,12 @@ bool Murder::LocalPlan(){
     vector<Eigen::Vector3d> s_p;
     pair<int, int> f_v;
     int h_id;
-    double path_length = 9999.0;
+    double path_cost = 9999.0;
     int exp_state;
     c_state.block(0, 0, 3, 1) = p_;
     c_state(3) = yaw_;
-    GVP_.GetLocalFNodes(c_state, v_, path, path_length, t_state, f_v, h_id, exp_state);
-    cout<<"id:"<<int(SDM_.self_id_)<<"exp_state:"<<exp_state<<"   "<<t_state.transpose()<<endl;
+    GVP_.GetLocalFNodes(c_state, v_, path, path_cost, t_state, f_v, h_id, exp_state);
+    // cout<<"id:"<<int(SDM_.self_id_)<<"exp_state:"<<exp_state<<"---"<<t_state.transpose()<<endl;
     switch (exp_state)
     {
     case 0:{ // free path
@@ -266,8 +266,8 @@ bool Murder::LocalPlan(){
             // safe_path = path;
             target_(3) = atan2(unknown_path.front()(1) - safe_path.back()(1), unknown_path.front()(0) - safe_path.back()(0));
             target_.block(0, 0, 3, 1) = safe_path.back();
-            ROS_ERROR("!!!");
-            cout<<"target_:"<<target_.transpose()<<"    !!!"<<" safe_num:"<<safe_path.size()<<"  unknown_num:"<<unknown_path.size()<<endl;//debug
+            // ROS_ERROR("!!!");
+            // cout<<"target_:"<<target_.transpose()<<"    !!!"<<" safe_num:"<<safe_path.size()<<"  unknown_num:"<<unknown_path.size()<<endl;//debug
             // if(!LRM_.IsFeasible(safe_path.back())){
             //     ROS_ERROR("id:%d dangerous local plan, fail!", SDM_.self_id_);
             //     for(auto &pt : path) cout<<"path:"<<pt.transpose()<<" feas:"<<int(LRM_.IsFeasible(pt))<<endl;
@@ -279,13 +279,13 @@ bool Murder::LocalPlan(){
         }
         else{
             target_ = t_state;
-            ROS_ERROR("???");
-            cout<<"target_:"<<target_.transpose()<<"    ???"<<endl;//debug
+            // ROS_ERROR("???");
+            // cout<<"target_:"<<target_.transpose()<<"    ???"<<endl;//debug
         }
         break;
     }
     default: // no path
-        GVP_.SetJob(0, -1, path_length, -1, path_length);
+        GVP_.SetJob(0, -1, path_cost, -1, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
         return false;                        
         break;
@@ -314,6 +314,7 @@ bool Murder::LocalPlan(){
     target_v_id_ = -1;
 
     pe = target_.head(3);
+    // cout<<"tar:"<<target_.transpose()<<"  pe:"<<pe.transpose()<<endl;
     ye = target_(3);
 
 
@@ -339,7 +340,7 @@ bool Murder::LocalPlan(){
                 for(int dir = -1; dir <=1; dir += 2){
                     pe = ps;
                     pe(dim) = ps(dim) + dir * 0.5;
-                    if(BM_.PosBBXFree(pe, Eigen::Vector3d::Ones() * colli_range_)){
+                    if(BM_.PosBBXFree(pe, Eigen::Vector3d::Ones() * colli_range_) && LRM_.IsFeasible(pe)){
                         ve.setZero();
                         ae.setZero();
                         ye = ys;
@@ -365,10 +366,10 @@ bool Murder::LocalPlan(){
         traj_start_t_ = hand_t;
         traj_end_t_ = TrajOpt_.traj.getTotalDuration() + traj_start_t_;
         replan_t_ = min(replan_duration_, TrajOpt_.traj.getTotalDuration()) + traj_start_t_;
-        cout<<"plan success1!"<<" s:"<<ps.transpose()<<"  e:"<<pe.transpose()<<" tar:"<<target_vp_pose_.transpose()<<" rt:"<<replan_t_ - traj_start_t_<<
-        " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
+        // cout<<"plan success1!"<<" s:"<<ps.transpose()<<"  e:"<<pe.transpose()<<" tar:"<<target_vp_pose_.transpose()<<" rt:"<<replan_t_ - traj_start_t_<<
+        // " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
         PublishTraj(false);        
-        GVP_.SetJob(4, f_v.first, path_length / TrajOpt_.upboundVec_[0], h_id, path_length / TrajOpt_.upboundVec_[0]);
+        GVP_.SetJob(4, f_v.first, path_cost, h_id, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
         return true;
     }
@@ -377,7 +378,7 @@ bool Murder::LocalPlan(){
         cout<<"e:"<<pe.transpose()<<endl;
         ROS_WARN("id:%d LocalPlan fail", SDM_.self_id_);
         MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
-        GVP_.SetJob(0, -1, path_length, -1, path_length);
+        GVP_.SetJob(0, -1, path_cost, -1, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
         return false;
     }
@@ -434,11 +435,11 @@ bool Murder::GlobalPlan(){
     vector<Eigen::Vector3d> s_p;
     pair<int, int> f_v;
     int h_id;
-    double path_length = 9999.0;
+    double path_cost = 9999.0;
     int exp_state;
     c_state.block(0, 0, 3, 1) = p_;
     c_state(3) = yaw_;
-    GVP_.GetGlobalFNodes(c_state, path, path_length, t_state, f_v, h_id, exp_state);
+    GVP_.GetGlobalFNodes(c_state, path, path_cost, t_state, f_v, h_id, exp_state);
 
     cout<<"id:"<<int(SDM_.self_id_)<<"exp_state:"<<t_state.transpose()<<"  "<<exp_state<<endl;//debug
     switch (exp_state)
@@ -494,7 +495,7 @@ bool Murder::GlobalPlan(){
         break;
     }
     default: // no path
-        GVP_.SetJob(5, -1, path_length, -1, path_length);
+        GVP_.SetJob(5, -1, path_cost, -1, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
         return false;                        
         break;
@@ -504,7 +505,7 @@ bool Murder::GlobalPlan(){
         ROS_WARN("id:%d GlobalPlan vp StrongCheckViewpoint fail f:%d v:%d", SDM_.self_id_, f_v.first, f_v.second);
         if(f_v.first >= 0 && f_v.first < FG_.f_grid_.size() && 0 <= f_v.second && f_v.second < FG_.f_grid_[f_v.first].local_vps_.size())
             MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
-        GVP_.SetJob(0, -1, path_length, -1, path_length);
+        GVP_.SetJob(0, -1, path_cost, -1, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
         return false;           
     }
@@ -533,7 +534,7 @@ bool Murder::GlobalPlan(){
                 for(int dir = -1; dir <=1; dir += 2){
                     pe = ps;
                     pe(dim) = ps(dim) + dir * 0.5;
-                    if(BM_.PosBBXFree(pe, Eigen::Vector3d::Ones() * colli_range_)){
+                    if(BM_.PosBBXFree(pe, Eigen::Vector3d::Ones() * colli_range_) && LRM_.IsFeasible(pe)){
                         ve.setZero();
                         ae.setZero();
                         ye = ys;
@@ -559,10 +560,10 @@ bool Murder::GlobalPlan(){
         traj_start_t_ = hand_t;
         traj_end_t_ = TrajOpt_.traj.getTotalDuration() + traj_start_t_;
         replan_t_ = min(replan_duration_ * 3.0, TrajOpt_.traj.getTotalDuration()) + traj_start_t_;
-        cout<<"plan success2!"<<" s:"<<ps.transpose()<<"  e:"<<pe.transpose()<<" tar:"<<target_vp_pose_.transpose()<<" rt:"<<replan_t_ - traj_start_t_<<
-        " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
+        // cout<<"plan success2!"<<" s:"<<ps.transpose()<<"  e:"<<pe.transpose()<<" tar:"<<target_vp_pose_.transpose()<<" rt:"<<replan_t_ - traj_start_t_<<
+        // " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
         PublishTraj(false);
-        GVP_.SetJob(5, f_v.first, path_length / TrajOpt_.upboundVec_[0], h_id, path_length / TrajOpt_.upboundVec_[0]);
+        GVP_.SetJob(5, f_v.first, path_cost, h_id, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
         return true;
     }
@@ -571,7 +572,7 @@ bool Murder::GlobalPlan(){
         cout<<"e:"<<pe.transpose()<<endl;
         ROS_WARN("id:%d GlobalPlan fail", SDM_.self_id_);
         MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
-        GVP_.SetJob(0, -1, path_length, -1, path_length);
+        GVP_.SetJob(0, -1, path_cost, -1, path_cost);
         if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
         return false;
     }
@@ -657,12 +658,14 @@ bool Murder::SwarmFeasiCheck(){
     Eigen::Vector3d cur_p;
     SDM_.GetLocalSwarmPos(swarm_p);
     for(int i = 0; i < SDM_.drone_num_; i++){
-        if(SDM_.IsEucLocalUAV(i+1)){
+        if(SDM_.IsEucLocalUAV(i+1) && i + 1 != SDM_.self_id_){
+            // if(i + 1 == SDM_.self_id_) ROS_ERROR("Man!");
             bool static_check = false;
             double total_t = SDM_.trajs_[i].getTotalDuration();
             if(SDM_.trajs_[i].getPieceNum() == 0 || cur_t - SDM_.start_t_[i] > total_t){
                 static_check = true;
             }
+
             for(double t = cur_t; t < check_duration_ + cur_t; t+=0.05){
                 if(cur_t > traj_end_t_ - 1e-3) break;
                 
@@ -677,7 +680,8 @@ bool Murder::SwarmFeasiCheck(){
                     swarm_p[i] = SDM_.trajs_[i].getPos(tc);
                 }
                 if((cur_p - swarm_p[i]).norm() < colli_range_) {
-                    ROS_WARN("id:%d swarm collision", SDM_.self_id_);
+                    cout<<"static_check:"<<static_check<<" tc:"<<tc<<endl;
+                    ROS_WARN("id:%d swarm collision %d", SDM_.self_id_, i + 1);
                     return false;
                 }
             }
@@ -947,7 +951,7 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
 
         if(LRM_.FindCorridors(path, h, p, path_pruned, traj_length_)){
             Eigen::Matrix3d startpva, endpva;
-            double min_t = YawP_.GetMinT(yps, ype);
+            double min_t = YawP_.GetMinT(yps, ype) - 1e-3;
             startpva.setZero();
             endpva.setZero();
             startpva.col(0) = ps;
@@ -962,16 +966,16 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
             if(TrajOpt_.Optimize(path_pruned, h, p, min_t, startpva, endpva, SDM_.self_id_, SDM_.trajs_, SDM_.start_t_, swarm_p, handt)){
                 Eigen::Vector3d traj_end = TrajOpt_.traj.getPos(TrajOpt_.traj.getTotalDuration());
                 ShowTraj(path, h);
-                for(auto &p : path){//debug
-                    if(!LRM_.IsFeasible(p)){
-                        ROS_ERROR("path dead!");
-                        ros::shutdown();
-                        return false;
-                    }
-                }
+                // for(auto &p : path){//debug
+                //     if(!LRM_.IsFeasible(p)){
+                //         ROS_ERROR("path dead!");
+                //         ros::shutdown();
+                //         return false;
+                //     }
+                // }
                 double yaw_end = ype;
                 if((traj_end - path.back()).norm() < 3.5){
-                    if((traj_end - path.back()).norm() > 0.1){
+                    if((traj_end - path.back()).norm() > 2.0){
                         yaw_end = atan2(gazept(1) - traj_end(1), gazept(0) - traj_end(0));
                     }
                     PlanYaw(yps, yds, ydds, yaw_end, yde, ydde, gazept, true);
@@ -984,7 +988,7 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
                 return true;
             }
             else{
-                cout<<"id:"<<int(SDM_.self_id_)<<"min_t:"<<min_t<<"d:"<<(ps - pe).norm()<<endl;
+                cout<<"id:"<<int(SDM_.self_id_)<<"min_t:"<<min_t<<"d:"<<(startpva.col(0) - endpva.col(0)).norm()<<"  dyaw:"<<yps-ype<<endl;
                 ROS_ERROR("opt failed");
                 return false;
             }
@@ -1000,7 +1004,7 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
         cout<<"e:"<<LRM_.IsFeasible(pe)<<endl;
         cout<<p_.transpose()<<"  "<<ps.transpose()<<endl;
         cout<<pe.transpose()<<endl;
-        ROS_ERROR("no path");
+        ROS_ERROR("id: %d no path", SDM_.self_id_);
         // ros::shutdown();
         return false;
     }
@@ -1013,20 +1017,22 @@ void Murder::PlanYaw(const double &yps, const double &yds, const double &ydds, c
     YawP_.SampleT(total_t, T);
     yaw_l.resize(T.size()+1);
     yaw_l(0) = yps;
+    double tc = 0.0;
     for(int i = 0; i+1 < T.size(); i++){
-        Eigen::Vector3d v = TrajOpt_.traj.getVel(T(i));
-        Eigen::Vector3d p = TrajOpt_.traj.getPos(T(i));
+        tc += T(i);
+        Eigen::Vector3d v = TrajOpt_.traj.getVel(tc);
+        Eigen::Vector3d p = TrajOpt_.traj.getPos(tc);
         double yaw = atan2(v(1), v(0));
         double yaw_gaze = atan2(gazept(1) - p(1), gazept(0) - p(0));
         if(i == 0 && gaze && T.size() == 2){     //gaze at the second yaw, if only have 3 yaws
-            yaw_l(i+1) = YawP_.GetClosestYaw(T(0), yaw_l(0), yds, yaw_gaze);
-            Debug(p, gazept);
+            yaw_l(i+1) = YawP_.GetClosestYaw(T(i), yaw_l(i), yds, yaw_gaze);
+            // Debug(p, gazept);
         }
         else if(i == 0)                         //dont gaze
-            yaw_l(i+1) = YawP_.GetClosestYaw(T(0), yaw_l(0), yds, yaw);
+            yaw_l(i+1) = YawP_.GetClosestYaw(T(i), yaw_l(i), yds, yaw);
         else if(T.size() > 2 && i == T.size() - 1){ //gaze at the last second yaw, if have more than 3 yaws 
-            yaw_l(i+1) = YawP_.GetClosestYaw(T(0), yaw_l(i-1), 0, yaw_gaze);
-            Debug(p, gazept);
+            yaw_l(i+1) = YawP_.GetClosestYaw(T(i), yaw_l(i), 0, yaw_gaze);
+            // Debug(p, gazept);
         }
         else
             yaw_l(i+1) = yaw;
@@ -1129,7 +1135,7 @@ Eigen::Vector3d Murder::GetEndV(uint16_t f_id, uint8_t v_id, Eigen::Vector3d ps,
     if(!FG_.HaveAliveNeighbour(f_id, vnorm)) return Eigen::Vector3d(0, 0, 0);
     double acc_l = TrajOpt_.upboundVec_[1] + acc_off_;
     double max_dacc_dist_ = TrajOpt_.upboundVec_[0] * TrajOpt_.upboundVec_[0] / 2 / (acc_l);
-    double v_m = min(sqrt(2.0 * (ps - vp).norm() * (acc_l) / TrajOpt_.upboundVec_[0]), TrajOpt_.upboundVec_[0]);
+    double v_m = min(sqrt(2.0 * (ps - vp).norm() * (acc_l) / TrajOpt_.upboundVec_[0]), TrajOpt_.upboundVec_[0] * 0.5);
     double d = 0;
     for(; d < max_dacc_dist_; d += 0.1){
         vit = vp + vnorm * d;
@@ -1166,7 +1172,7 @@ void Murder::BodyOdomCallback(const nav_msgs::OdometryConstPtr& odom){
     v_(0) = odom->twist.twist.linear.x;
     v_(1) = odom->twist.twist.linear.y;
     v_(2) = odom->twist.twist.linear.z;
-    if(v_.norm() > 5.0) ROS_ERROR("large v!!!!!!!!!");//debug
+    // if(v_.norm() > 5.0) ROS_ERROR("large v!");//debug
     v_ = qua.toRotationMatrix() * v_;
     yaw_ = atan2(qua.matrix()(1, 0), qua.matrix()(0, 0));
     yaw_v_ = odom->twist.twist.angular.z * robot_pose_(2, 2) + odom->twist.twist.angular.y * robot_pose_(2, 1)

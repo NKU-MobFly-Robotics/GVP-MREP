@@ -1,0 +1,33 @@
+<launch>
+  <arg name="world" default="maze3" />
+  <arg name="gui" default="true" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find multisim_gazebo)/worlds/$(arg world).world" />
+    <arg name="use_sim_time" value="true"/>
+    <arg name="paused" value="false"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+  <node pkg="multisim_gazebo" name="multi_rotors" type="multi_rotors_node" output="screen">    
+    <rosparam command="load" file="$(find multisim_gazebo)/resource/2_1_rotors.yaml" />
+    <remap from="/multisim_local/odom2" to="/firefly2/odometry_sensor1/odometry" />
+  </node>
+
+  <include file="$(find multisim_gazebo)/launch/rotors_sim.launch">
+    <arg name="id" value="2" />
+    <arg name="waypoint_x" value="0.0" />
+    <arg name="waypoint_y" value="1.0" />
+    <arg name="waypoint_z" value="0.0" />
+  </include>
+
+  <include file="$(find multisim_gazebo)/launch/rotors_hull_sim.launch">
+    <arg name="id" value="1" />
+    <arg name="waypoint_x" value="0.0" />
+    <arg name="waypoint_y" value="0.0" />
+    <arg name="waypoint_z" value="0.0" />
+  </include>
+
+  <include file="$(find swarm_bridge)/launch/test_tcp_drone2.launch">
+  </include>
+</launch>

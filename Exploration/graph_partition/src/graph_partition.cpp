@@ -467,7 +467,7 @@ void GraphVoronoiPartition::GetLocalFNodes(const Eigen::Vector4d &c_state, const
     for(auto &hn : hn_l) {
         targets.emplace_back(hn->pos_);
     }
-    cout<<"id:"<<int(SDM_->self_id_)<<"hn_l:"<<hn_l.size()<<"  lowbd:"<<lowbd.transpose()<<"   upbd:"<<upbd.transpose()<<endl;
+    // cout<<"id:"<<int(SDM_->self_id_)<<"hn_l:"<<hn_l.size()<<"  lowbd:"<<lowbd.transpose()<<"   upbd:"<<upbd.transpose()<<endl;
 
     /* local Djkstra search */
     if(!LRM_->DjkstraLocalDist(c_state.block(0, 0, 3, 1), paths, pruned_paths, targets, dist_l)) {
@@ -524,7 +524,7 @@ void GraphVoronoiPartition::GetLocalFNodes(const Eigen::Vector4d &c_state, const
             }
 
             if(best_d > 99998.0) {
-                ROS_ERROR("how???");
+                ROS_ERROR("What is Love? Baby dont hurt me.");
                 exp_state = 2;
                 return;
             }
@@ -602,7 +602,7 @@ void GraphVoronoiPartition::GetLocalFNodes(const Eigen::Vector4d &c_state, const
 
                 if(MDTG_->F_depot_[hfe->tail_]->f_flag_ & 2){
                     double edge_length = hfe->length_;
-                    cout<<"edge_length_s:"<<edge_length<<endl;//debug
+                    // cout<<"edge_length_s:"<<edge_length<<endl;//debug
                     // if(hfe->e_flag_ & 16)
                         // edge_length = hfe->length_;
                     // cout<<"edge_length_:"<<edge_length<<"  d_p[i].first:"<<d_p[i].first<<"  flag:"<<int(hfe->e_flag_)<<endl;//debug
@@ -654,7 +654,7 @@ void GraphVoronoiPartition::GetGlobalFNodes(const Eigen::Vector4d &c_state, list
     Eigen::Vector3d lowbd = c_state.block(0, 0, 3, 1) - Eigen::Vector3d::Ones() * MDTG_->eurange_;
     Eigen::Vector3d upbd = c_state.block(0, 0, 3, 1) + Eigen::Vector3d::Ones() * MDTG_->eurange_;
     list<h_ptr> hn_l;
-    cout<<"id:"<<int(SDM_->self_id_)<<"hn_l:"<<hn_l.size()<<"  lowbd:"<<lowbd.transpose()<<"   upbd:"<<upbd.transpose()<<endl;
+    // cout<<"id:"<<int(SDM_->self_id_)<<"hn_l:"<<hn_l.size()<<"  lowbd:"<<lowbd.transpose()<<"   upbd:"<<upbd.transpose()<<endl;
 
     MDTG_->GetHnodesBBX(upbd, lowbd, hn_l);
     for(auto &hn : hn_l) targets.emplace_back(hn->pos_);
@@ -779,13 +779,14 @@ bool GraphVoronoiPartition::ExploreOrFollow(f_ptr &f_target){
 
 bool GraphVoronoiPartition::GetBestTarget(list<pair<double, list<Eigen::Vector3d>>> &d_p, list<h_ptr> &hn_l, f_ptr &fn_t,
                             list<Eigen::Vector3d> &path, Eigen::Vector4d &t_state, pair<int, int> &f_v, int &h_id){
+    double tc = ros::WallTime::now().toSec();
     do {
         list<pair<double, list<Eigen::Vector3d>>>::iterator d_p_it = d_p.begin();
         list<h_ptr>::iterator hn_it = hn_l.begin();
         double best_gain = 1e-8;
         h_ptr best_h;
         fn_t = NULL;    
-        ROS_WARN("id:%d GetBestTarget!", SDM_->self_id_);
+        // ROS_WARN("id:%d GetBestTarget!", SDM_->self_id_);
         for(; hn_it != hn_l.end(); hn_it++, d_p_it++){
             double g;   //to modify
             double f_num = 0;
@@ -808,7 +809,9 @@ bool GraphVoronoiPartition::GetBestTarget(list<pair<double, list<Eigen::Vector3d
             g = f_num;
             for(int i = 0; i < swarm_job_h_.size(); i++){
                 if(i+1 == SDM_->self_id_) continue;
-                double dt = t - (swarm_job_h_dist_[i] - last_new_job_[i]);
+                double run_t = tc - last_new_job_[i];
+                double remain_t = max(0.0, swarm_job_h_dist_[i] - run_t);
+                double dt = t - remain_t;
                 if(swarm_job_h_[i] == (*hn_it)->id_ && dt > 0){
                     g -= tau_ * dt;
                     work_num++;

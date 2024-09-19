@@ -130,7 +130,7 @@ double YawPlanner::GetClosestYaw(const double &t, const double &yaw_s, const dou
         double dyaw = Dyaw(yaw_t, yaw_s);
         double acc_t, vmax_t, d_acc;
         double dacc_t, dvmax_t, d_dacc;
-        double a = a_max_ * 0.5;
+        double a = a_max_ * 0.8;
         acc_t = abs((v_max_ - yaw_v) / a);
         vmax_t = t - acc_t;
         if(vmax_t > 0){

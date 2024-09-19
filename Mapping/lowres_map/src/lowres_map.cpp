@@ -703,7 +703,7 @@ bool LowResMap::PathCheck(list<Eigen::Vector3d> &path, bool allow_uknown){
     for(int dim = 0; dim < 3; dim++) inv_res(dim) = 1.0 / node_scale_(dim);
 
     if(path.size() <= 1) {
-        ROS_ERROR("strange path! %ld", path.size());
+        // ROS_ERROR("strange path! %ld", path.size());
         return false;
     }
 
@@ -898,10 +898,10 @@ void LowResMap::CoarseExpand(Eigen::Vector3i &coridx_start, Eigen::Vector3i &cor
     vector<Eigen::Vector3d> debug_pts;
     corners[0] = coridx_end;
     corners[1] = coridx_start;
-    ROS_WARN("CoarseExpand0");
+    // ROS_WARN("CoarseExpand0");
     while(1){
         bool expandable = false;
-        ROS_WARN("CoarseExpand0.1");
+        // ROS_WARN("CoarseExpand0.1");
 
         for(int dim = 0; dim < 3; dim++){
             for(int dir = -1; dir <= 1; dir += 2){
@@ -912,25 +912,25 @@ void LowResMap::CoarseExpand(Eigen::Vector3i &coridx_start, Eigen::Vector3i &cor
                 start_p(dim) = corners[int((1-dir)/2)](dim) + dir;
 
                 if(!InsideMap(start_p)) expand[dim*2 + int((1-dir)/2)] = false;
-                ROS_WARN("CoarseExpand0.112");
+                // ROS_WARN("CoarseExpand0.112");
 
                 for(chk_it1(0) = 0; chk_it1(0) < (dim == 0 ? 1 : corridor_scale(0)) - 1e-4 && expand[dim*2 + int((1-dir)/2)]; chk_it1(0)++){
                     for(chk_it1(1) = 0; chk_it1(1) < (dim == 1 ? 1 : corridor_scale(1)) - 1e-4 && expand[dim*2 + int((1-dir)/2)]; chk_it1(1)++){
                         for(chk_it1(2) = 0; chk_it1(2) < (dim == 2 ? 1 : corridor_scale(2)) - 1e-4 && expand[dim*2 + int((1-dir)/2)]; chk_it1(2)++){
-                            ROS_WARN("CoarseExpand0.113");
+                            // ROS_WARN("CoarseExpand0.113");
 
                             chk_it2 = start_p + chk_it1;
                             if(!InsideMap(chk_it2)) ROS_ERROR("CoarseExpand");
-                            ROS_WARN("CoarseExpand0.1134");//
+                            // ROS_WARN("CoarseExpand0.1134");//
                             Eigen::Vector3d p = IdtoPos(chk_it2);
                             int blockid = GetBlockId(p);
-                            cout<<p.transpose()<<"--"<<chk_it2.transpose()<<" ;;; "<<blockid<<endl;
+                            // cout<<p.transpose()<<"--"<<chk_it2.transpose()<<" ;;; "<<blockid<<endl;
 
                             if(IsFeasible(chk_it2) != VoxelState::free){
-                                ROS_WARN("CoarseExpand0.1135");
+                                // ROS_WARN("CoarseExpand0.1135");
                                 expand[dim*2 + int((1-dir)/2)] = false;
                             }
-                            ROS_WARN("CoarseExpand0.114");
+                            // ROS_WARN("CoarseExpand0.114");
                         }
                     }
                 }
@@ -950,7 +950,7 @@ void LowResMap::CoarseExpand(Eigen::Vector3i &coridx_start, Eigen::Vector3i &cor
     }
     coridx_end = corners[0];
     coridx_start = corners[1];
-    ROS_WARN("CoarseExpand1");
+    // ROS_WARN("CoarseExpand1");
 
 }
 

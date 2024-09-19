@@ -177,14 +177,13 @@ void MurderFSM::FSMCallback(const ros::TimerEvent &e){
         case M_State::SLEEP :{
             if(!exploring_){
                 if(start_trigger_)
-                    // M_planner_.Stay(M_planner_.init_pose_);
                 M_planner_.SetPlanInterval(0.3);
             }
             else{
-                int rp = M_planner_.SwitchMode();
                 if(1){ // try local plan, before sampling and DTG updating
                     ChangeState(M_State::LOCALPLAN);
-                    M_planner_.SetPlanInterval(0.009);
+                    double sleep_t = 1.1 * M_planner_.SDM_.self_id_ / M_planner_.SDM_.drone_num_;
+                    M_planner_.SetPlanInterval(sleep_t);
                     break;
                 }
             }

@@ -282,16 +282,16 @@ bool RayCaster::step(Eigen::Vector3d& ray_pt) {
 
   // step_num_++;
 
-  // dist_ = (Eigen::Vector3d(x_, y_, z_) - start_).squaredNorm();
+  dist_ = (Eigen::Vector3d(x_, y_, z_) - start_).squaredNorm();
 
   if (x_ == endX_ && y_ == endY_ && z_ == endZ_) {
     return false;
   }
 
-  // if (dist_ > maxDist_)
-  // {
-  //   return false;
-  // }
+  if (dist_ > maxDist_ * 2.0) // bad thing happens
+  {
+    return false;
+  }
 
   // tMaxX stores the t-value at which we cross a cube boundary along the
   // X axis, and similarly for Y and Z. Therefore, choosing the least tMax

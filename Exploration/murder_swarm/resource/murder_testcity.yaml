@@ -59,6 +59,7 @@ block_map/pro_hit_occ: 0.90
 block_map/pro_miss_free: 0.75
 block_map/statistic_v: true
 block_map/show_block: false
+block_map/vis_mode: true
 block_map/min_finish_t: 45.0
 
 Exp/show_swarm_traj: false

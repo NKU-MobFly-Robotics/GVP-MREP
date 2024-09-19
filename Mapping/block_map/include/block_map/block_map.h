@@ -252,8 +252,9 @@ private:
     vector<pair<double, Eigen::Matrix4d>> swarm_pose_;
     vector<Eigen::Vector3d> robots_scale_;
     uint8_t self_id_;
-    double swarm_send_delay_, swarm_tol_, swarm_pub_thresh_;
+    double swarm_send_delay_, swarm_tol_, swarm_pub_thresh_, bline_occ_range_;
     tr1::unordered_map<int, int> *swarm_filter_dict_;
+    bool vis_mode_;
     // ofstream debug_l_;
 
 };

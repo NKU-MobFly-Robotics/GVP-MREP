@@ -492,10 +492,12 @@ inline void SwarmDataManager::SetMapReq(exp_comm_msgs::MapReqC &msg){
 inline void SwarmDataManager::GetLocalSwarmPos(vector<Eigen::Vector3d> &swarm_pos){
     swarm_pos.clear();
     for(int i = 0; i < drone_num_; i++){
+        // if(i + 1 == self_id_) continue;
         Eigen::Vector3d pos;
-        pos(0) = Poses_[i - 1].position.x;
-        pos(1) = Poses_[i - 1].position.y;
-        pos(2) = Poses_[i - 1].position.z;
+        pos(0) = Poses_[i].position.x;
+        pos(1) = Poses_[i].position.y;
+        pos(2) = Poses_[i].position.z;
+
         swarm_pos.emplace_back(pos);
     }
 }

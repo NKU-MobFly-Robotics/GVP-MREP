@@ -57,13 +57,14 @@ block_map/pro_hit_occ: 0.90
 block_map/pro_miss_free: 0.75
 block_map/statistic_v: true
 block_map/show_block: true
+block_map/vis_mode: false
 block_map/min_finish_t: 50.0
 
 Exp/show_swarm_traj: false
 EXP/finish_hold_duration: 15.0
-Exp/robot_sizeX: 0.5
-Exp/robot_sizeY: 0.5
-Exp/robot_sizeZ: 0.5
+Exp/robot_sizeX: 0.48
+Exp/robot_sizeY: 0.48
+Exp/robot_sizeZ: 0.3
 Exp/minX: -20.0
 Exp/minY: -20.0
 Exp/minZ: 0.0
@@ -87,7 +88,7 @@ Exp/acc_off: -0.5
 Exp/statistic: true
 Exp/finish_thresh: 0.69
 Exp/swarm_check: true
-Exp/colli_range: 0.75
+Exp/colli_range: 0.8
 
 #swarm
 # Exp/UAV_id: 1

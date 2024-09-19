@@ -129,15 +129,7 @@ void SwarmDataManager::PoseTimerCallback(const ros::TimerEvent &e){
         pose_pub_g_t_ = cur_t;
         for(uint8_t i = 1; i < drone_num_ + 1; i++){
             if(i == self_id_) continue;
-            // bool pub = true;
-            // for(auto &l_id : self_neighbor_hns_){
-            //     if(l_id == i){
-            //         pub = false;
-            //         break;
-            //     }
-            // }
             if(!IsEucLocal(Poses_[i - 1], Poses_[self_id_ - 1])){
-                // cout<<"!!!!!!!!!!!!!!!!swarm pose to:"<<int(i)<<endl;
                 IDP_g.to_uavs.emplace_back(i);
             }
         }

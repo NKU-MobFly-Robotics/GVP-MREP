@@ -51,7 +51,7 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
             swarm_trajs.push_back(FastCheckTraj(trajs[i], dt, st));
         }
         else{
-            std::cout<<i<<"  --  "<<poses[i].transpose()<<std::endl;
+            // std::cout<<i<<"  --  "<<poses[i].transpose()<<std::endl;
             swarm_trajs.push_back(FastCheckTraj(10.0, dt, poses[i]));
         }
 
@@ -121,6 +121,8 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
     if (std::isinf(gcopter.optimize(traj, relCostTol_)))
     {
         ROS_ERROR("inf");
+        cout<<"min_t:"<<min_t<<endl;
+        cout<<"corridors:"<<corridors.size()<<endl;
         traj = traj_tempt;
         return false;
     }

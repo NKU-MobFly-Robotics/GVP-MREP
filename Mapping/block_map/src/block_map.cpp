@@ -95,7 +95,11 @@ void BlockMap::init(ros::NodeHandle &nh, ros::NodeHandle &nh_private){
         robots_scale.z(), 0.3);
     nh_private_.param(ns + "/block_map/swarm_pub_thresh", 
         swarm_pub_thresh_, 0.95);
-        
+    nh_private.param(ns + "/block_map/bline_occ_range", 
+        bline_occ_range_, 0.7);
+    nh_private.param(ns + "/block_map/vis_mode", 
+        vis_mode_, false);
+
     // nh_private.param(ns + "/Exp/drone_num", 
     //     drone_num, 0);
     // nh_private.param(ns + "/Exp/UAV_id", 
@@ -439,9 +443,8 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
             SDM_->swarm_sub_map_.pop_front();
         }
         
-        if(/*SDM_->req_flag_  || */double(SDM_->finish_num_) / SDM_->drone_num_ > SDM_->finish_thresh_ && !finish_flag_ && ros::WallTime::now(). toSec() - start_t_ > min_finish_t_){
+        if((SDM_->req_flag_ && vis_mode_) || double(SDM_->finish_num_) / SDM_->drone_num_ > SDM_->finish_thresh_ && !finish_flag_ && ros::WallTime::now(). toSec() - start_t_ > min_finish_t_){
             finish_flag_ = true;
-            // SDM_->req_flag_ = false;
 
             exp_comm_msgs::MapReqC mq;
             Eigen::Vector3d up, down;
@@ -457,12 +460,15 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
                     }
                 }
             }
-            for(int i = 0; i < 20; i++){
+            for(int i = 0; i < 5; i++){
                 cout<<"ground finish!!!===="<<endl;
             }
             Debug(pts);
             mq.flag = 1;
-            // mq.flag = 0;
+            if(vis_mode_ && SDM_->req_flag_) {
+                SDM_->req_flag_ = false;
+                mq.flag = 0;
+            }
             SDM_->SetMapReq(mq);
         }
 
@@ -470,19 +476,28 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
             SDM_->req_flag_ = false;
             exp_comm_msgs::MapReqC mq;
             Eigen::Vector3d up, down;
-            list<Eigen::Vector3d> pts;
+            // list<Eigen::Vector3d> pts;
             for(int f_id = 0; f_id < SBS_.size(); f_id++){
                 for(int i = 0; i < 8; i++){
                     GetSBSBound(f_id, i, up, down);//debug
+                    // if(vis_mode_){
+                    //     if(SBS_[f_id].exploration_rate_[i] < swarm_pub_thresh_){
+                    //         mq.f_id.emplace_back(f_id);
+                    //         mq.block_id.emplace_back(i);
+                    //         // pts.push_back((up + down) / 2);
+                    //     }
+                    // }
+                    // else{
                     if(SBS_[f_id].exploration_rate_[i] < swarm_pub_thresh_ && SBS_[f_id].exploration_rate_[i] > 5e-3){
                         mq.f_id.emplace_back(f_id);
                         mq.block_id.emplace_back(i);
-                        pts.push_back((up + down) / 2);
+                        // pts.push_back((up + down) / 2);
                     }
+                    // }
                 }
             }
 
-            Debug(pts);
+            // Debug(pts);
             mq.flag = 0; 
             SDM_->SetMapReq(mq);
         }
@@ -495,17 +510,18 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
         if(SDM_->finish_list_[SDM_->self_id_ - 1] && !finish_flag_ && SDM_->req_flag_){
             finish_flag_ = true;
             list<Eigen::Vector3d> pts;
-            Eigen::Vector3d up, down;
+            // Eigen::Vector3d up, down;
             for(int i = 0; i < SDM_->mreq_.block_id.size(); i++){
-                GetSBSBound(SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i], up, down);//debug
-                pts.push_back((up + down) / 2);
+                // GetSBSBound(SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i], up, down);//debug
+                // pts.push_back((up + down) / 2);
 
                 if(SBS_[SDM_->mreq_.f_id[i]].to_pub_[SDM_->mreq_.block_id[i]]) continue;
                 SBS_[SDM_->mreq_.f_id[i]].to_pub_[SDM_->mreq_.block_id[i]] = true;
-                swarm_pub_block_.push_back({{SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i]}, ros::WallTime::now().toSec() - (swarm_send_delay_ + 0.5)});
+                double pub_t = cur_t - swarm_send_delay_ - 0.5;
+                swarm_pub_block_.push_back({{SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i]}, pub_t});
             }
             for(int i = 0; i < 10; i++) ROS_ERROR("finishhhhhh");
-            Debug(pts, 5);
+            // Debug(pts, 5);
             SDM_->mreq_.block_id.clear();
             SDM_->mreq_.f_id.clear();
         }
@@ -516,7 +532,9 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
 
                 if(SBS_[SDM_->mreq_.f_id[i]].to_pub_[SDM_->mreq_.block_id[i]]) continue;
                 SBS_[SDM_->mreq_.f_id[i]].to_pub_[SDM_->mreq_.block_id[i]] = true;
-                swarm_pub_block_.push_back({{SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i]}, ros::WallTime::now().toSec()});
+                double pub_t = cur_t;
+                if(vis_mode_) pub_t -= swarm_send_delay_ + 0.5;
+                swarm_pub_block_.push_back({{SDM_->mreq_.f_id[i], SDM_->mreq_.block_id[i]}, pub_t});
             }
         }
 
@@ -528,7 +546,7 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
             exp_comm_msgs::MapC msg;
             if(pub_it->second + swarm_send_delay_ < cur_t) t_o_pub = true; // time out
             Vox2Msg(msg, pub_it->first.first, pub_it->first.second);
-            if((!finish_flag_ && SBS_[msg.f_id].last_pub_rate_[msg.block_id] + 0.15 > SBS_[msg.f_id].exploration_rate_[msg.block_id]
+            if(((!finish_flag_ ||vis_mode_) && SBS_[msg.f_id].last_pub_rate_[msg.block_id] + 0.15 > SBS_[msg.f_id].exploration_rate_[msg.block_id]
                 || finish_flag_ && SBS_[msg.f_id].last_pub_rate_[msg.block_id] + 0.01 > SBS_[msg.f_id].exploration_rate_[msg.block_id])
                  && t_o_pub){
                 SBS_[msg.f_id].to_pub_[msg.block_id] = false;
@@ -593,7 +611,7 @@ void BlockMap::InsertPcl(const sensor_msgs::PointCloud2ConstPtr &pcl){
             end_point(0) = pcl_it->x;
             end_point(1) = pcl_it->y;
             end_point(2) = pcl_it->z;
-            end_point = cam2world_.block(0, 0, 3, 3) * end_point + cam2world_.block(0, 3, 3, 1);
+            // end_point = cam2world_.block(0, 0, 3, 3) * end_point + cam2world_.block(0, 3, 3, 1);
 
             dir = end_point - cam;
             end3i = PostoId3(end_point);            
@@ -664,9 +682,9 @@ void BlockMap::InsertPcl(const sensor_msgs::PointCloud2ConstPtr &pcl){
             }
             else{
                 // end_point = Id2LocalPos(GBS_[*block_it], *vox_it);
-
-
-                GBS_[*block_it]->odds_log_[*vox_it] = max(odds_origin + pro_miss_, thr_min_);
+                p_it = Id2LocalPos(GBS_[*block_it], *vox_it);
+                if((p_it - cam).norm() > bline_occ_range_ || GBS_[*block_it]->odds_log_[*vox_it] < 0)
+                    GBS_[*block_it]->odds_log_[*vox_it] = max(odds_origin + pro_miss_, thr_min_);
             }
             GBS_[*block_it]->flags_[*vox_it] = 0;
             if(!GBS_[*block_it]->show_ && show_block_){
