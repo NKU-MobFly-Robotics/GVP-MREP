@@ -12,8 +12,8 @@ Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on 
 # 1. Overview
 **GVP-MREP** is a distributed and communication-efficient multi-UAV exploration system. For lightweight multi-UAV communication, a multi-robot dynamic topological graph (MR-DTG) is designed. Supported by MR-DTG, graph Voronoi partition (GVP) is adopted to allocate exploration tasks to each UAV. Each UAV operates GVP and optimizes trajectories to their targets distributedly.   
 <p align="center">
-  <img src="pics/0.gif" width = "432" height = "242"/>
-  <img src="pics/1.gif" width = "432" height = "242"/>
+  <img src="pics/0.gif" width = "408" height = "228"/>
+  <img src="pics/1.gif" width = "408" height = "228"/>
 </p>
 
 **Video Links**: [youtube](https://www.youtube.com/watch?v=AtG9stNVjX0) or [bilibili](https://www.bilibili.com/video/BV1KC411h79h/).
