@@ -413,6 +413,10 @@ namespace minco
         Eigen::VectorXd T5;
 
     public:
+        inline void setEndVel(const Eigen::Vector3d &endv){
+            tailPVA.col(1).head(3) = endv;
+        }
+
         inline void setConditions(const Eigen::Matrix3d &headState,
                                   const Eigen::Matrix3d &tailState,
                                   const int &pieceNum)
@@ -580,6 +584,83 @@ namespace minco
             }
             return;
         }
+
+        inline void propogateGrad(const Eigen::MatrixX3d &partialGradByCoeffs,
+                                  const Eigen::VectorXd &partialGradByTimes,
+                                  Eigen::Matrix3Xd &gradByPoints,
+                                  Eigen::VectorXd &gradByEndVel,
+                                  Eigen::VectorXd &gradByTimes)
+
+        {
+            gradByPoints.resize(3, N - 1);
+            gradByTimes.resize(N);
+            Eigen::MatrixX3d adjGrad = partialGradByCoeffs;
+            A.solveAdj(adjGrad);
+
+            gradByEndVel = adjGrad.row(6 * N - 2).transpose();
+
+            for (int i = 0; i < N - 1; i++)
+            {
+                gradByPoints.col(i) = adjGrad.row(6 * i + 5).transpose();
+            }
+
+            Eigen::Matrix<double, 6, 3> B1;
+            Eigen::Matrix3d B2;
+            for (int i = 0; i < N - 1; i++)
+            {
+                // negative velocity
+                B1.row(2) = -(b.row(i * 6 + 1) +
+                              2.0 * T1(i) * b.row(i * 6 + 2) +
+                              3.0 * T2(i) * b.row(i * 6 + 3) +
+                              4.0 * T3(i) * b.row(i * 6 + 4) +
+                              5.0 * T4(i) * b.row(i * 6 + 5));
+                B1.row(3) = B1.row(2);
+
+                // negative acceleration
+                B1.row(4) = -(2.0 * b.row(i * 6 + 2) +
+                              6.0 * T1(i) * b.row(i * 6 + 3) +
+                              12.0 * T2(i) * b.row(i * 6 + 4) +
+                              20.0 * T3(i) * b.row(i * 6 + 5));
+
+                // negative jerk
+                B1.row(5) = -(6.0 * b.row(i * 6 + 3) +
+                              24.0 * T1(i) * b.row(i * 6 + 4) +
+                              60.0 * T2(i) * b.row(i * 6 + 5));
+
+                // negative snap
+                B1.row(0) = -(24.0 * b.row(i * 6 + 4) +
+                              120.0 * T1(i) * b.row(i * 6 + 5));
+
+                // negative crackle
+                B1.row(1) = -120.0 * b.row(i * 6 + 5);
+
+                gradByTimes(i) = B1.cwiseProduct(adjGrad.block<6, 3>(6 * i + 3, 0)).sum();
+            }
+
+            // negative velocity
+            B2.row(0) = -(b.row(6 * N - 5) +
+                          2.0 * T1(N - 1) * b.row(6 * N - 4) +
+                          3.0 * T2(N - 1) * b.row(6 * N - 3) +
+                          4.0 * T3(N - 1) * b.row(6 * N - 2) +
+                          5.0 * T4(N - 1) * b.row(6 * N - 1));
+
+            // negative acceleration
+            B2.row(1) = -(2.0 * b.row(6 * N - 4) +
+                          6.0 * T1(N - 1) * b.row(6 * N - 3) +
+                          12.0 * T2(N - 1) * b.row(6 * N - 2) +
+                          20.0 * T3(N - 1) * b.row(6 * N - 1));
+
+            // negative jerk
+            B2.row(2) = -(6.0 * b.row(6 * N - 3) +
+                          24.0 * T1(N - 1) * b.row(6 * N - 2) +
+                          60.0 * T2(N - 1) * b.row(6 * N - 1));
+
+            gradByTimes(N - 1) = B2.cwiseProduct(adjGrad.block<3, 3>(6 * N - 3, 0)).sum();
+
+            gradByTimes += partialGradByTimes;
+        }
+        
+
 
         inline void propogateGrad(const Eigen::MatrixX3d &partialGradByCoeffs,
                                   const Eigen::VectorXd &partialGradByTimes,

@@ -93,10 +93,15 @@ void RunCallback(const ros::TimerEvent &e){
         double cur_t = ros::WallTime::now().toSec();
         if(cur_t - start_t_> traj_.getTotalDuration()){
             cur_t = start_t_ + traj_.getTotalDuration() - 1e-4;
+            v.setZero();
+            a.setZero();
+        }
+        else{
+            v = traj_.getVel(cur_t - start_t_);
+            a = traj_.getAcc(cur_t - start_t_);
         }
         p = traj_.getPos(cur_t - start_t_);
-        v = traj_.getVel(cur_t - start_t_);
-        a = traj_.getAcc(cur_t - start_t_);
+
         // yaw_traj_.GetCmd(min((cur_t - start_t_)*1.3, cur_t - start_t_ + 0.3), yaw, yawd, yawdd);
         yaw_traj_.GetCmd(cur_t - start_t_, yaw, yawd, yawdd);
         // double temp_yaw;

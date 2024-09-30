@@ -1,15 +1,17 @@
 #include <gcopter/traj_opt.h>
 
 void AtoTraj::Init(ros::NodeHandle &nh, ros::NodeHandle &nh_private){
-    weightVec_.resize(4);
-    upboundVec_.resize(3);
+    weightVec_.resize(5);
+    upboundVec_.resize(4);
     string ns = ros::this_node::getName();
     nh_private.param(ns + "/opt/MaxVel", upboundVec_[0], 2.0);
     nh_private.param(ns + "/opt/MaxAcc", upboundVec_[1], 2.0);
+    nh_private.param(ns + "/opt/MaxJer", upboundVec_[3], 15.0);
     nh_private.param(ns + "/opt/SwarmAvoid", upboundVec_[2], 1.0);
     nh_private.param(ns + "/opt/WeiPos", weightVec_[0], 1000.0);
     nh_private.param(ns + "/opt/WeiVel", weightVec_[1], 100.0);
     nh_private.param(ns + "/opt/WeiAcc", weightVec_[2], 100.0);
+    nh_private.param(ns + "/opt/WeiJer", weightVec_[4], 50.0);
     nh_private.param(ns + "/opt/WeiSwarm", weightVec_[3], 100.0);
     nh_private.param(ns + "/opt/WeiT", weightT_, 20.0);
     nh_private.param(ns + "/opt/WeiminT", weight_minT_, 500.0);
@@ -58,15 +60,17 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
     }
     // Debug(debug_pts);
 
-    Eigen::VectorXd magnitudeBounds(3);
-    Eigen::VectorXd penaltyWeights(4);
+    Eigen::VectorXd magnitudeBounds(4);
+    Eigen::VectorXd penaltyWeights(5);
     magnitudeBounds(0) = upboundVec_[0];
     magnitudeBounds(1) = upboundVec_[1];
     magnitudeBounds(2) = upboundVec_[2];
+    magnitudeBounds(3) = upboundVec_[3];
     penaltyWeights(0) = weightVec_[0];
     penaltyWeights(1) = weightVec_[1];
     penaltyWeights(2) = weightVec_[2];
     penaltyWeights(3) = weightVec_[3];
+    penaltyWeights(4) = weightVec_[4];
 
     vector<Eigen::Matrix3Xd> corridorVstemp;
     corridorVstemp.resize(corridorVs.size()*2 - 1);

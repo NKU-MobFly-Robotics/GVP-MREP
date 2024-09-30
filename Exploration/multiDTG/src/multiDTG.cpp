@@ -740,6 +740,7 @@ void MultiDTG::Show(){
         p1.y = h->pos_(1);
         p1.z = h->pos_(2);
         // cout<<"show!!!!!!!!!!!!!!!!!!!"<<h->pos_.transpose()<<endl;
+        // cout<<"neighbours:"<<h->hh_edges_.size()<<endl;
         if(h->h_flags_ & 4)
             mka.markers[0].colors.push_back(CM_->Id2Color(SDM_->self_id_, 1.0));
         else 
@@ -757,6 +758,7 @@ void MultiDTG::Show(){
             hf_e_list.insert(hf_e_list.end(), h->hf_edges_.begin(), h->hf_edges_.end()); 
         // }
     }
+    // cout<<"show en:"<<hh_e_list.size()<<endl;
 
     mka.markers[1].header.frame_id = "world";
     mka.markers[1].header.stamp = ros::Time::now();
@@ -916,16 +918,38 @@ void MultiDTG::Show(){
     mka.markers[4].color.g = 0.5;
     mka.markers[4].color.b = 0.0;
     for(auto &e : hh_e_list){
-        if(e->path_.size() <= 1) continue;
-        p1.x = e->path_.front().x();
-        p1.y = e->path_.front().y();
-        p1.z = e->path_.front().z();
-        p2.x = e->path_.back().x();
-        p2.y = e->path_.back().y();
-        p2.z = e->path_.back().z();
-        mka.markers[4].points.emplace_back(p1);
-        mka.markers[4].points.emplace_back(p2);
+        if(show_e_details_){
+            if(e->path_.size() <= 1) continue;
+            for(list<Eigen::Vector3d>::iterator p_it = e->path_.begin(); p_it != e->path_.end(); p_it++){
+                p1.x = p_it->x();
+                p1.y = p_it->y();
+                p1.z = p_it->z();
+                p_it++;
+                if(p_it == e->path_.end()) break;
+                p2.x = p_it->x();
+                p2.y = p_it->y();
+                p2.z = p_it->z();
+                p_it--;
+                mka.markers[4].points.emplace_back(p1);
+                mka.markers[4].points.emplace_back(p2);
+            }
+        }
+        else{
 
+            if(e->path_.size() <= 1) continue;
+            // if((e->path_.front() - e->path_.back()).norm() > 8.0){
+            //     ROS_ERROR("shake hands? %ld", e->path_.size());
+            // }
+            p1.x = e->path_.front().x();
+            p1.y = e->path_.front().y();
+            p1.z = e->path_.front().z();
+            p2.x = e->path_.back().x();
+            p2.y = e->path_.back().y();
+            p2.z = e->path_.back().z();
+            mka.markers[4].points.emplace_back(p1);
+            mka.markers[4].points.emplace_back(p2);
+
+        }
     }
 
     mka.markers[5].header.frame_id = "world";

@@ -135,10 +135,12 @@ opt/YawVel: 1.8
 opt/YawAcc: 1.8
 opt/MaxVel: 1.5
 opt/MaxAcc: 1.5
+opt/MaxJer: 15.0
 opt/SwarmAvoid: 0.9
 opt/WeiPos: 5000.0
 opt/WeiVel: 500.0
 opt/WeiAcc: 100.0
+opt/WeiJer: 50.0
 opt/WeiSwarm: 500.0
 opt/WeiminT: 10.0
 opt/WeiT: 200.0

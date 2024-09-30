@@ -330,7 +330,7 @@ bool Murder::LocalPlan(){
     //     return true;
     // }
     // else
-    ve = GetEndV(f_v.first, f_v.second, ps, vs, dangerous_path_);
+    // ve = GetEndV(f_v.first, f_v.second, ps, vs, dangerous_path_);
 
     if(TrajPlanB(ps, vs, as, pe, ve, 
             ae, ys, yds, ydds, ye, yde, ydde, FG_.f_grid_[f_v.first].center_, hand_t)){
@@ -512,7 +512,7 @@ bool Murder::GlobalPlan(){
 
     pe = target_.head(3);
     ye = target_(3);
-    ve = GetEndV(f_v.first, f_v.second, ps, vs, dangerous_path_);
+    // ve = GetEndV(f_v.first, f_v.second, ps, vs, dangerous_path_);
 
     // if(!dangerous && TrajPlanA(s_p ,ps, vs, as, pe, ve, 
     //         ae, ys, yds, ydds, ye, yde, ydde, FG_.f_grid_[f_v.first].center_)){
@@ -628,7 +628,7 @@ bool Murder::GlobalPlan(){
 bool Murder::TrajCheck(){
     double cur_t = max(ros::WallTime::now().toSec(), traj_start_t_);
 
-    if(cur_t > traj_end_t_ - 1e-3) return false;
+    if(cur_t > replan_t_ - 1e-3) return false;
 
     double end_t = min(check_duration_, traj_end_t_ - 1e-3 - cur_t);
     cur_t = cur_t - traj_start_t_;
@@ -801,7 +801,7 @@ int Murder::Replan(const bool &new_target, const bool &ignore_duration){
         yde = 0; 
         ydde = 0;
     }
-    ve = GetEndV(target_f_id_, target_v_id_, ps, vs, dangerous_path_ || !reach_end_traj_);
+    // ve = GetEndV(target_f_id_, target_v_id_, ps, vs, dangerous_path_ || !reach_end_traj_);
     // cout<<"ps:"<<ps.transpose()<<" vs:"<<vs.transpose()<<" as:"<<as.transpose()<<" pe:"<<pe.transpose()<<" ys:"<<ys<<" ye:"<<ye<<endl;
     if(LRM_.IsFeasible(pe) && TrajPlanB(ps, vs, as, pe, ve, 
                 ae, ys, yds, ydds, target_(3), yde, ydde, FG_.f_grid_[target_f_id_].center_, hand_t)){
