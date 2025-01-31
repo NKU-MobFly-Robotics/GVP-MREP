@@ -181,6 +181,8 @@ public:
     inline bool ClearOwner(const uint16_t &f_id); 
     inline double GetSensorRange(){return sensor_range_;}; 
     inline bool HaveAliveNeighbour(uint16_t f_id, Eigen::Vector3d dir);
+    inline void YawNorm(double &yaw);
+    inline double YawDiff(const double &yaw1, const double &yaw2);
 
     void ShowGainDebug();
     void DebugShowAll();
@@ -514,5 +516,22 @@ inline bool FrontierGrid::HaveAliveNeighbour(uint16_t f_id, Eigen::Vector3d dir)
         }
     }
     return false;
+}
+
+inline void FrontierGrid::YawNorm(double &yaw){
+    double yawn;
+    int c = yaw / M_PI / 2;
+    yawn = yaw - c * M_PI * 2;
+    
+    if(yawn < -M_PI) yawn += M_PI * 2;
+    if(yawn > M_PI) yawn -= M_PI * 2;
+    yaw = yawn;
+    return;
+}
+
+inline double FrontierGrid::YawDiff(const double &yaw1, const double &yaw2){
+    double dy = yaw1 - yaw2;
+    YawNorm(dy);
+    return dy;
 }
 #endif

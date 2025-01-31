@@ -4,35 +4,40 @@
   - [Parameters](#3-parameters)
   - [Acknowledgements](#4-acknowledgements)
   - [Doing](#5-doing)
-
+<div align="center">
+<a href="https://ieeexplore.ieee.org/document/10801613"><img alt="Paper" src="https://img.shields.io/badge/Paper-IEEE-darkblue"/></a>
+<a href="https://www.bilibili.com/video/BV1KC411h79h/?spm_id_from=333.1387.list.card_archive.click"><img alt="Paper" src="https://img.shields.io/badge/Video-Bilibili-pink"/></a>
+<a href="https://www.youtube.com/watch?v=AtG9stNVjX0&t=4s"><img alt="Paper" src="https://img.shields.io/badge/Video-Youtube-darkred"/></a>
+</div>
 
 # GVP-MREP
 Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph (IROS 2024 accepted)
 
 # 1. Overview
 **GVP-MREP** is a distributed and communication-efficient multi-UAV exploration system. For lightweight multi-UAV communication, a multi-robot dynamic topological graph (MR-DTG) is designed. Supported by MR-DTG, graph Voronoi partition (GVP) is adopted to allocate exploration tasks to each UAV. Each UAV operates GVP and optimizes trajectories to their targets distributedly.   
-<p align="center">
+<p align="left">
   <img src="pics/0.gif" width = "408" height = "228"/>
   <img src="pics/1.gif" width = "408" height = "228"/>
 </p>
 
 **Video Links**: [youtube](https://www.youtube.com/watch?v=AtG9stNVjX0) or [bilibili](https://www.bilibili.com/video/BV1KC411h79h/).
 <a href="https://www.youtube.com/watch?v=AtG9stNVjX0" target="blank">
-    <p align="center">
-        <img src="pics/cover.png" width="600" height="337" />
+    <p align="left">
+        <img src="pics/cover_new.png" width="600" height="337" />
     </p>
 </a>
 
 **Author**: [Qianli Dong (Charlie Dog)](https://github.com/charlie-dog)
 
-**Paper**: Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph, Qianli Dong, Haobo Xi, Shiyong Zhang, Qingchen Bi, Tianyi Li, Ziyu Wang and Xuebo Zhang, IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2024, accepted.
+**Paper**: Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph, Qianli Dong, Haobo Xi, Shiyong Zhang, Qingchen Bi, Tianyi Li, Ziyu Wang and Xuebo Zhang, IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2024, accepted. [IEEE](https://ieeexplore.ieee.org/document/10801613)/[Arxiv](https://arxiv.org/pdf/2408.05808)
 ```
-@article{dong2024fast,
-  title={Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph},
+@INPROCEEDINGS{10801613,
   author={Dong, Qianli and Xi, Haobo and Zhang, Shiyong and Bi, Qingchen and Li, Tianyi and Wang, Ziyu and Zhang, Xuebo},
-  journal={arXiv preprint arXiv:2408.05808},
-  year={2024}
-}
+  booktitle={2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, 
+  title={Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph}, 
+  year={2024},
+  pages={14063-14070},
+  doi={10.1109/IROS58592.2024.10801613}}
 ```
 # 2. Setup
 This work is developed in Ubuntu 20.04, [ROS noetic](http://wiki.ros.org/noetic/Installation/Ubuntu).

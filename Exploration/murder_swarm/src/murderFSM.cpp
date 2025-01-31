@@ -29,19 +29,19 @@ void MurderFSM::TriggerCallback(const std_msgs::EmptyConstPtr &msg){
 }
 
 void MurderFSM::FSMCallback(const ros::TimerEvent &e){
-    bool exc_plan;
+    bool exc_plan = true;
     int ap = M_planner_.AllowPlan(ros::WallTime::now().toSec());
     
     if(state_ != FINISH){
         finish_t_ = ros::WallTime::now().toSec();
     }
 
-    if(ap == 0) exc_plan = true;                                                                            
-    else if(ap == 1) exc_plan = false;                    
-    else if(ap == 2) exc_plan = true;              
-    else if(ap == 3 && (state_ == M_State::EXCUTE /*|| state_ == M_State::LOCALPLAN*/)) exc_plan = false; 
-    else if(ap == 3) exc_plan = false;
-    else if(ap == 4) exc_plan = true;
+    if(ap == 0) exc_plan = true; // allow plan                                                                           
+    else if(ap == 1) exc_plan = false; // not satisfy plan interval         
+    else if(ap == 2) exc_plan = true;  // current position not in free space
+    // else if(ap == 3 && (state_ == M_State::EXCUTE /*|| state_ == M_State::LOCALPLAN*/)) exc_plan = false; // sensor not update
+    else if(ap == 3) exc_plan = false; // sensor not update
+    else if(ap == 4) exc_plan = true;  // viewpoints not sampled
 
     if(!exc_plan) {
         return;

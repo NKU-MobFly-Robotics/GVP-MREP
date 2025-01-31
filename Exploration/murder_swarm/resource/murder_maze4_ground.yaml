@@ -107,7 +107,7 @@ MR_DTG/update_FF: false
 MR_DTG/resX: 2.0
 MR_DTG/resY: 2.0
 MR_DTG/resZ: 2.0
-MR_DTG/show_edge_details: true
+MR_DTG/show_edge_details: false
 
 LowResMap/localgraph_sizex: 14.0
 LowResMap/localgraph_sizey: 14.0

@@ -857,8 +857,9 @@ int Murder::ViewPointsCheck(const double &t){
     
     Eigen::Vector3d tar_p(target_vp_pose_(0), target_vp_pose_(1), target_vp_pose_(2));
     double dp, dyaw;
-    dyaw = abs(yaw_ - target_vp_pose_(3));
-    if(abs(dyaw) > 2 * M_PI) dyaw = dyaw - floor(dyaw / (M_PI*2)) * M_PI * 2; 
+    dyaw  = abs(FG_.YawDiff(yaw_, target_vp_pose_(3)));
+    // dyaw = abs(yaw_ - target_vp_pose_(3));
+    // if(abs(dyaw) > 2 * M_PI) dyaw = dyaw - floor(dyaw / (M_PI*2)) * M_PI * 2; 
     dp = (tar_p - p_).norm();
     if(!FG_.StrongCheckViewpoint(target_f_id_, target_v_id_, true) || (dp < 1.0 && dyaw < 0.5)){
         if(target_f_id_ >= 0 && target_f_id_ < FG_.f_grid_.size() && 0 <= target_v_id_ && target_v_id_ < FG_.f_grid_[target_f_id_].local_vps_.size())
