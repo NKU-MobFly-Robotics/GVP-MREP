@@ -39,23 +39,29 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
     // magnitudeBounds = [v_max, a_max]^T
     // penaltyWeights = [pos_weight, vel_weight, acc_weight]^T
     // initialize some constraint parameters
-    std::vector<FastCheckTraj> swarm_trajs;
-    double dt = 0.05;
-    // list<Eigen::Vector3d> debug_pts;
+    // std::vector<FastCheckTraj> swarm_trajs;
+    // double dt = 0.05;
+    /* exclude self traj/pose */
+    vector<Trajectory<5>> trajs_ns;
+    vector<double> swarm_t_ns;
+    vector<Eigen::Vector3d> poses_ns;
     for(int i = 0; i < trajs.size(); i++){
         if(i+1 == self_id) continue;
-        if(trajs[i].getPieceNum() == 0){
-            swarm_trajs.push_back(FastCheckTraj(10.0, dt, poses[i]));
-        }
+        trajs_ns.emplace_back(trajs[i]);
+        swarm_t_ns.emplace_back(swarm_t[i]);
+        poses_ns.emplace_back(poses[i]);
+    //     if(trajs[i].getPieceNum() == 0){
+    //         swarm_trajs.push_back(FastCheckTraj(10.0, dt, poses[i]));
+    //     }
 
-        if(trajs[i].getTotalDuration() + swarm_t[i] > start_t){
-            double st = start_t - swarm_t[i];
-            swarm_trajs.push_back(FastCheckTraj(trajs[i], dt, st));
-        }
-        else{
-            // std::cout<<i<<"  --  "<<poses[i].transpose()<<std::endl;
-            swarm_trajs.push_back(FastCheckTraj(10.0, dt, poses[i]));
-        }
+    //     if(trajs[i].getTotalDuration() + swarm_t[i] > start_t){
+    //         double st = start_t - swarm_t[i];
+    //         swarm_trajs.push_back(FastCheckTraj(trajs[i], dt, st));
+    //     }
+    //     else{
+    //         // std::cout<<i<<"  --  "<<poses[i].transpose()<<std::endl;
+    //         swarm_trajs.push_back(FastCheckTraj(10.0, dt, poses[i]));
+    //     }
 
     }
     // Debug(debug_pts);
@@ -117,7 +123,10 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
                         quadratureRes,
                         magnitudeBounds,
                         penaltyWeights,
-                        swarm_trajs))
+                        trajs_ns,
+                        swarm_t_ns,
+                        poses_ns,
+                        start_t))
     {
         return false;
     }
@@ -141,7 +150,7 @@ bool AtoTraj::Optimize(const vector<Eigen::Vector3d> &path,
 
 void AtoTraj::Debug(list<Eigen::Vector3d> &debug_list){
     visualization_msgs::Marker mk;
-    mk;
+    // mk;
     mk.header.frame_id = "world";
     mk.header.stamp = ros::Time::now();
     mk.id = -2;

@@ -61,7 +61,11 @@ namespace gcopter
         Eigen::Matrix3Xd vEndVel;
         PolyhedraV vPolytopes;
         PolyhedraH hPolytopes;
-        std::vector<FastCheckTraj> swarm_trajs_;
+        // std::vector<FastCheckTraj> swarm_trajs_;
+        std::vector<Trajectory<5>> swarm_trajs_;
+        std::vector<double> swarm_t_;
+        std::vector<Eigen::Vector3d> swarm_poses_;
+        double start_t_;
         Eigen::Matrix3Xd shortPath;
 
         Eigen::VectorXi pieceIdx;
@@ -476,10 +480,14 @@ namespace gcopter
                                                 const int &integralResolution,
                                                 const Eigen::VectorXd &magnitudeBounds,
                                                 const Eigen::VectorXd &penaltyWeights,
+                                                const std::vector<Trajectory<5>> &swarmTr,
+                                                const std::vector<double> swarmT,
+                                                const std::vector<Eigen::Vector3d> &swarmP,
+                                                const double &startT,
                                                 double &cost,
                                                 Eigen::VectorXd &gradT,
-                                                Eigen::MatrixX3d &gradC,
-                                                std::vector<FastCheckTraj> &swarmTr){
+                                                Eigen::MatrixX3d &gradC){
+
             const double velSqrMax = magnitudeBounds(0) * magnitudeBounds(0);
             const double accSqrMax = magnitudeBounds(1) * magnitudeBounds(1);
             const double jerSqrMax = magnitudeBounds(3) * magnitudeBounds(3);
@@ -491,11 +499,12 @@ namespace gcopter
             const double weightJer = penaltyWeights(4);
             const double weightSwarm = penaltyWeights(3);
 
-            Eigen::Vector3d pos, vel, acc, jer, sna, sw_pos;
+            Eigen::Vector3d pos, vel, acc, jer, sna, sw_pos, sw_vel;
             Eigen::Vector3d gradPos, gradVel, gradAcc, gradJer;
+            double gradRefTrajT, gradPreT;
 
             double step, alpha;
-            double s1, s2, s3, s4, s5, s_cur;
+            double s1, s2, s3, s4, s5, s_cur, t_sw;
             Eigen::Matrix<double, 6, 1> beta0, beta1, beta2, beta3, beta4;
             Eigen::Vector3d outerNormal;
             Eigen::Vector3d swarmNormal;
@@ -508,6 +517,22 @@ namespace gcopter
             const int pieceNum = T.size();
             const double integralFrac = 1.0 / integralResolution;
             s_cur = 0;
+
+            std::vector<pair<double, double>> swarm_durs; // <start T, traj dur>
+            std::vector<bool> use_pose;
+            int swarm_num = swarmTr.size();
+
+            for(int i = 0; i < swarm_num; i++){
+                if(swarmTr[i].getPieceNum() == 0){
+                    use_pose.emplace_back(true);
+                    swarm_durs.emplace_back(swarmT[i] - startT, 0.0);
+                }
+                else {
+                    use_pose.emplace_back(false);
+                    swarm_durs.emplace_back(swarmT[i] - startT, swarmTr[i].getTotalDuration());
+                }
+            }   
+
             for (int i = 0; i < pieceNum; i++)
             {
                 const Eigen::Matrix<double, 6, 3> &c = coeffs.block<6, 3>(i * 6, 0);
@@ -539,6 +564,8 @@ namespace gcopter
 
                     gradPos.setZero(), gradVel.setZero(), gradAcc.setZero(), gradJer.setZero();
                     pena = 0.0;
+                    gradRefTrajT = 0.0;
+                    gradPreT = 0.0;
 
                     for (int k = 0; k < K; k++)
                     {
@@ -566,9 +593,9 @@ namespace gcopter
                         pena += weightJer * violaJerPena;
                     }
                     /* swarm viola */
-                    for(auto &swtr : swarmTr){
-                        if(swtr.GetPos(s_cur + s1, sw_pos)){
-                            swarmNormal = (sw_pos - pos);
+                    for(int k = 0; k < swarm_num; k++){
+                        if(use_pose[k]){
+                            swarmNormal = (swarmP[k] - pos);
                             violaSwarm = SwarmAvoidMax - swarmNormal.squaredNorm();
                             if (smoothedL1(violaSwarm, smoothFactor, violaSwarmPena, violaSwarmPenaD))
                             {   
@@ -576,7 +603,46 @@ namespace gcopter
                                 pena += weightSwarm * violaSwarmPena;
                             }
                         }
+                        else{
+                            t_sw = s_cur + s1 - swarm_durs[k].first;
+                            if(t_sw < 0.0){
+                                sw_pos = swarmTr[k].getPos(0.0);
+                                sw_vel = swarmTr[k].getVel(0.0);
+                                sw_pos += sw_vel * t_sw;    
+                            }
+                            else if(t_sw > swarm_durs[k].second){
+                                sw_pos = swarmTr[k].getPos(swarm_durs[k].second);
+                                sw_vel = swarmTr[k].getVel(swarm_durs[k].second);
+                                sw_pos += sw_vel * (t_sw - swarm_durs[k].second);    
+                            }
+                            else{
+                                sw_pos = swarmTr[k].getPos(t_sw);
+                                sw_vel = swarmTr[k].getVel(t_sw);
+                            }
+
+                            swarmNormal = (sw_pos - pos);
+                            violaSwarm = SwarmAvoidMax - swarmNormal.squaredNorm();
+                            if (smoothedL1(violaSwarm, smoothFactor, violaSwarmPena, violaSwarmPenaD))
+                            {   
+                                gradPos += weightSwarm * violaSwarmPenaD * swarmNormal * 2.0;
+                                gradRefTrajT += weightSwarm * violaSwarmPenaD * swarmNormal.dot(sw_vel) * -2.0;
+                                gradPreT += gradRefTrajT;
+                                pena += weightSwarm * violaSwarmPena;
+                            }
+                        }
                     }
+                    // for(auto &swtr : swarmTr){
+                        // swtr.getPos()
+                        // if(swtr.GetPos(s_cur + s1, sw_pos)){
+                        //     swarmNormal = (sw_pos - pos);
+                        //     violaSwarm = SwarmAvoidMax - swarmNormal.squaredNorm();
+                        //     if (smoothedL1(violaSwarm, smoothFactor, violaSwarmPena, violaSwarmPenaD))
+                        //     {   
+                        //         gradPos += weightSwarm * violaSwarmPenaD * swarmNormal * 2.0;
+                        //         pena += weightSwarm * violaSwarmPena;
+                        //     }
+                        // }
+                    // }
 
                     node = (j == 0 || j == integralResolution) ? 0.5 : 1.0;
                     alpha = j * integralFrac;
@@ -588,9 +654,10 @@ namespace gcopter
                     gradT(i) += (gradPos.dot(vel) +
                                  gradVel.dot(acc) +
                                  gradAcc.dot(jer) + 
-                                 gradJer.dot(sna)) *
+                                 gradJer.dot(sna) + gradRefTrajT) *
                                     alpha * node * step +
                                 node * integralFrac * pena;
+                    if(i > 0) gradT.head(i).array() += node * step * gradPreT;
                     cost += node * step * pena;
                 }
                 s_cur += T(i);
@@ -797,8 +864,9 @@ namespace gcopter
                                     obj.hPolyIdx, obj.hPolytopes,
                                     obj.smoothEps, obj.integralRes,
                                     obj.magnitudeBd, obj.penaltyWt,
+                                    obj.swarm_trajs_, obj.swarm_t_, obj.swarm_poses_, obj.start_t_,
                                     cost, obj.partialGradByTimes, 
-                                    obj.partialGradByCoeffs, obj.swarm_trajs_);
+                                    obj.partialGradByCoeffs);
 
             // obj.minco.propogateGrad(obj.partialGradByCoeffs, obj.partialGradByTimes,
             //                         obj.gradByPoints, obj.gradByTimes);
@@ -1090,10 +1158,19 @@ namespace gcopter
                           const int &integralResolution,
                           const Eigen::VectorXd &magnitudeBounds,
                           const Eigen::VectorXd &penaltyWeights,
-                          std::vector<FastCheckTraj> &swarm_trajs)
+                        //   std::vector<FastCheckTraj> &swarm_trajs,
+                          const std::vector<Trajectory<5>> &trajs,
+                          const std::vector<double> &swarm_t,
+                          const std::vector<Eigen::Vector3d> &poses,
+                          const double &start_t)
                         //   const Eigen::VectorXd &physicalParams)
         {
-            swarm_trajs_ = swarm_trajs;
+            // swarm_trajs_ = swarm_trajs;
+            swarm_trajs_ = trajs;
+            swarm_poses_ = poses;
+            swarm_t_ = swarm_t;
+            start_t_ = start_t;
+
             rho = timeWeight;
             phi = mintimeWeight;
             minT = mintime;
@@ -1246,7 +1323,7 @@ namespace gcopter
                 minco.setParameters(points, times);
                 minco.getTrajectory(traj);
             }
-            else if(ret == lbfgs::LBFGSERR_MAXIMUMLINESEARCH){
+            else if(ret == lbfgs::LBFGSERR_MAXIMUMITERATION){
                 forwardT(tau, times);
                 forwardP(xi, vPolyIdx, vPolytopes, points);
                 minco.setParameters(points, times);
@@ -1260,6 +1337,16 @@ namespace gcopter
                 std::cout << "Optimization Failed: "
                           << lbfgs::lbfgs_strerror(ret)
                           << std::endl;
+
+                for(int i = 0; i < swarm_trajs_.size(); i++){
+                    if(swarm_trajs_[i].getPieceNum() == 0){
+                        cout<<"empty traj"<<endl;
+                    }
+                    else {
+                        cout<<"st:"<<swarm_t_[i] - start_t_<<endl;
+                    }
+                }   
+
             }
 
             return minCostFunctional;
