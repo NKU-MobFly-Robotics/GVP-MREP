@@ -30,7 +30,7 @@ Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on 
 **Author**: [Qianli Dong (Charlie Dog)](https://github.com/charlie-dog)
 
 **Paper**: Fast and Communication-Efficient Multi-UAV Exploration Via Voronoi Partition on Dynamic Topological Graph, Qianli Dong, Haobo Xi, Shiyong Zhang, Qingchen Bi, Tianyi Li, Ziyu Wang and Xuebo Zhang, IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), 2024, accepted. [IEEE](https://ieeexplore.ieee.org/document/10801613)/[Arxiv](https://arxiv.org/pdf/2408.05808)
-```
+```bibtex
 @INPROCEEDINGS{10801613,
   author={Dong, Qianli and Xi, Haobo and Zhang, Shiyong and Bi, Qingchen and Li, Tianyi and Wang, Ziyu and Zhang, Xuebo},
   booktitle={2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, 
