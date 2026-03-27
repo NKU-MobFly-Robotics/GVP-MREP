@@ -6,6 +6,8 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <swarm_exp_msgs/LocalTraj.h>
 #include <std_msgs/Empty.h>
+#include "quadrotor_msgs/PositionCommand.h"
+
 
 #include <gcopter/traj_opt.h>
 #include <yaw_planner/yaw_planner.h>
@@ -17,7 +19,7 @@
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
 
-ros::Publisher control_pub_, show_pub_, trigger_pub_;
+ros::Publisher control_pub_, control_l_pub_, show_pub_, trigger_pub_;
 ros::Subscriber traj_sub_;
 ros::Subscriber takeoff_sub_;
 int traj_state_;
@@ -41,28 +43,40 @@ bool TryUpdateTraj();
 void Takeoff(const std_msgs::EmptyPtr &msg){
     trajectory_msgs::MultiDOFJointTrajectoryPoint trajectory_point_msg;
     mav_msgs::EigenTrajectoryPoint trajectory_point;
+    quadrotor_msgs::PositionCommand cmd_lite;
+
     trajectory_point.position_W.x() = takeoff_pos_(0);
     trajectory_point.position_W.y() = takeoff_pos_(1);
+    cmd_lite.yaw = 0.0;
+    cmd_lite.position.x = takeoff_pos_(0);
+    cmd_lite.position.y = takeoff_pos_(1);
+
     trajectory_point.orientation_W_B.w() = 1.0;
     trajectory_point.orientation_W_B.z() = 0.0;
-    for(double l = 0.0; l < 1.0; l += 0.11){
+    for(double l = 0.0; l < 1.0; l += 0.01){
         trajectory_msgs::MultiDOFJointTrajectory samples_array;
         trajectory_point.position_W.z() = takeoff_pos_(2)*l;
-        trajectory_point.orientation_W_B.z() = sin(M_PI * (l) / 2);
-        trajectory_point.orientation_W_B.w() = cos(M_PI * l / 2);
+        trajectory_point.orientation_W_B.z() = sin(M_PI * (l));
+        trajectory_point.orientation_W_B.w() = cos(M_PI * l);
+        cmd_lite.position.z = takeoff_pos_(2)*l;
+        cmd_lite.yaw = M_PI * l * 2;
         mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
         samples_array.points.push_back(trajectory_point_msg);
         control_pub_.publish(samples_array);
-        ros::Duration(2.0/10).sleep();
+        control_l_pub_.publish(cmd_lite);
+        ros::Duration(2.0/100).sleep();
     }
     ros::Duration(0.5).sleep();
-    for(double l = 0.0; l < 1.0; l += 0.11){    
+    for(double l = 0.0; l < 1.0; l += 0.01){    
         trajectory_msgs::MultiDOFJointTrajectory samples_array;
-        trajectory_point.position_W.x() += 0.11 * 1.5;
+        trajectory_point.position_W.x() += 0.01 * 1.5;
+        cmd_lite.position.x += 0.01 * 1.5;
+
         mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
         samples_array.points.push_back(trajectory_point_msg);
         control_pub_.publish(samples_array);
-        ros::Duration(1.0/10).sleep();
+        control_l_pub_.publish(cmd_lite);
+        ros::Duration(1.0/100).sleep();
     }
     ros::Duration(1.5).sleep();
     trigger_pub_.publish(*msg);
@@ -75,6 +89,8 @@ void RunCallback(const ros::TimerEvent &e){
     trajectory_msgs::MultiDOFJointTrajectory samples_array;
     trajectory_msgs::MultiDOFJointTrajectoryPoint trajectory_point_msg;
     mav_msgs::EigenTrajectoryPoint trajectory_point;
+    quadrotor_msgs::PositionCommand cmd_lite;
+
     Eigen::Vector3d p, v, a;
     double yaw, yawd, yawdd;
     // ROS_WARN("run0");
@@ -128,9 +144,23 @@ void RunCallback(const ros::TimerEvent &e){
     trajectory_point.setFromYawRate(yawd);
     trajectory_point.setFromYawAcc(yawdd);
 
+    cmd_lite.position.x = p.x();
+    cmd_lite.position.y = p.y();
+    cmd_lite.position.z = p.z();
+    cmd_lite.velocity.x = v.x();
+    cmd_lite.velocity.y = v.y();
+    cmd_lite.velocity.z = v.z();
+    cmd_lite.acceleration.x = a.x();
+    cmd_lite.acceleration.y = a.y();
+    cmd_lite.acceleration.z = a.z();
+    cmd_lite.yaw = yaw;
+    cmd_lite.yaw_dot = yawd;
+
     mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
     samples_array.points.push_back(trajectory_point_msg);
     control_pub_.publish(samples_array);
+    control_l_pub_.publish(cmd_lite);
+
     Showcmd(p, yaw);
 }
 
@@ -305,6 +335,8 @@ int main(int argc, char** argv){
     ready_ = false;
     control_pub_ = nh.advertise < trajectory_msgs::MultiDOFJointTrajectory
         > ("/command/trajectory", 5);
+
+    control_l_pub_ = nh.advertise<quadrotor_msgs::PositionCommand> ("/command/traj_lite", 10);
     string ns = ros::this_node::getName();
     show_pub_ = nh.advertise<visualization_msgs::MarkerArray>(ns + "/traj_show", 5);
     traj_sub_ = nh.subscribe("/trajectory_cmd", 1, &TrajCallback);
@@ -321,7 +353,7 @@ int main(int argc, char** argv){
 
     if(auto_takeoff){
         std_msgs::EmptyPtr e;
-        ros::Duration(3.0).sleep();
+        ros::Duration(5.0).sleep();
         Takeoff(e);
     }
     else{
