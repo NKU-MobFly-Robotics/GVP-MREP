@@ -476,8 +476,13 @@ void MultiDTG::RemoveVp(const Eigen::Vector3d &center, int const &f_id, int cons
     Eigen::Vector3d vp_pos, best_vp_pos;
     best_l = 99999.0;
     for(int v_id = 0; v_id < fn->cf_->local_vps_.size(); v_id++){
-        if(fn->cf_->local_vps_[v_id] == 1 && FG_->GetVpPos(f_id, v_id, vp_pos) && 
+        if(fn->cf_->local_vps_[v_id] == 1 && FG_->GetVpPos(f_id, v_id, vp_pos) &&
                 LRM_->ShortestLength2Root(vp_pos, target_h_id, cur_l) && cur_l < best_l){
+            // 根因修复:LRM 的 tie 只随占据消亡,会推荐"陈旧/外来根"(节点已不在本机
+            // 仓库,或本机 root 悬空)——实测 hid=外来根、inDepot=0、rootId=-1。
+            // 候选根必须本机真实存在且从当前 root 可达,否则采纳后 FindHnode 必失败
+            h_ptr cand;
+            if(root_ == NULL || !FindHnode(target_h_id, cand)) continue;
             best_l = cur_l;
             best_h_id = target_h_id;
             best_v_id = v_id;
@@ -492,18 +497,29 @@ void MultiDTG::RemoveVp(const Eigen::Vector3d &center, int const &f_id, int cons
         reverse(path_prune.begin(), path_prune.end());
         h_ptr hn;
         if(!FindHnode(path_prune.front(), best_h_id, hn)){
-            ROS_ERROR("Error RemoveVp Hnode!");
-            cout<<"vp:"<<best_vp_pos.transpose()<<endl;
-
-            cout<<"hid:"<<best_h_id<<"  pp pos:"<<path_prune.front().transpose()<<endl;
-            cout<<"hid:"<<best_h_id<<"  p pos:"<<path.front().transpose()<<"   "<<path.back().transpose()<<endl;
-            LRM_->DebugTie(path_prune.front());
+            // 诊断:分辨三种情形——A.在仓库但BFS不连通 B.根本不在仓库(谁删的?) C.GetVoxId门卫误杀
+            {
+                h_ptr raw = NULL;
+                for(auto &h_l : H_depot_) for(auto &h : h_l) if(h->id_ == best_h_id){ raw = h; break; }
+                ROS_WARN("RemoveVp diag: hid=%u inDepot=%d rootId=%d voxId=%d pos=(%.2f,%.2f,%.2f)",
+                         best_h_id, raw!=NULL,
+                         root_!=NULL ? (int)root_->id_ : -1,
+                         GetVoxId(path_prune.front()),
+                         path_prune.front()(0), path_prune.front()(1), path_prune.front()(2));
+                if(raw != NULL) cout<<"raw h pos:"<<raw->pos_.transpose()<<" edges(hh,hf):"<<raw->hh_edges_.size()<<","<<raw->hf_edges_.size()<<endl;
+            }
+            // 分区瞬态:LRM 的 tie 只随占据清理而消亡,多机 Partition/移交后 hnode 可能
+            // 已不在本机可达分区内,而 LRM 仍保留其旧 tie(无清理接口,结构性缺口)。
+            // 先按 id 兜底(hnode 移动过位置的情形),仍失败说明 hnode 已被分走——
+            // 跳过本轮重连,r_f_edges_ 下一轮 Update 会重建,不杀进程。
+            ROS_WARN_THROTTLE(5.0, "RemoveVp: hnode %u not reachable (partitioned?), skip rewire", best_h_id);
             if(FindHnode(best_h_id, hn)){
                 cout<<"h pos:"<<hn->pos_.transpose()<<"   "<<LRM_->IsFeasible(hn->pos_)<<endl;
                 LRM_->DebugTie(hn->pos_);
             }
-            ros::shutdown();
-            return;
+            else{
+                return;
+            }
         }
         Eigen::Vector3d vp_pos;
         FG_->GetVpPos(f_id, best_v_id, vp_pos);

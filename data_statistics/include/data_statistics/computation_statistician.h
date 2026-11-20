@@ -9,26 +9,21 @@ using namespace std;
 
 class ComputationStatistician{
 public:
-    ComputationStatistician(){};
+    ComputationStatistician(): data_size_(0), vdata_size_(0){};
     ~ComputationStatistician(){
-                    // oft_list_[i]<<"max:"<<max_list_[i]<<endl;
-        double v = 0;
-        for(int i = 0; i < vdata_size_ - 1; i++){
-            // if(i > 0) v += volume_list_[i];
-            // ofvdata_list_.back()<<vname_list_[i]+":"<<to_string(volume_list_[i])<<endl;
+        // 修复:原实现按 data_size_/vdata_size_ 下标索引 ofstream 向量,但这两个计数
+        // 在未调用 init 时是未初始化垃圾值(向量可能为空)——空向量越界读出垃圾对象
+        // 后 close() 必然段错误(实测 ~SwarmDataManager 崩溃)。改为按向量实际尺寸关闭。
+        for(size_t i = 0; i + 1 < ofvdata_list_.size() && i + 1 < ofvt_list_.size(); i++){
             ofvdata_list_[i].close();
-		    ofvt_list_[i].close();
+            ofvt_list_[i].close();
         }
-        // ofvdata_list_.back()<<to_string(v)<<endl;
-        ofvt_list_.back().close();
-        ofvdata_list_.back().close();
+        if(!ofvt_list_.empty()) ofvt_list_.back().close();
+        if(!ofvdata_list_.empty()) ofvdata_list_.back().close();
 
-
-        for(int i = 0; i < data_size_; i++){
-            // ofdata_list_[i]<<"max:"<<max_list_[i]<<endl;
-
+        for(size_t i = 0; i < ofdata_list_.size() && i < oft_list_.size(); i++){
             ofdata_list_[i].close();
-		    oft_list_[i].close();
+            oft_list_[i].close();
         }
     };
     void init(ros::NodeHandle &nh, ros::NodeHandle &nh_private); 
