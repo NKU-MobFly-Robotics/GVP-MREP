@@ -1,6 +1,7 @@
 #ifndef SWARM_DATA_H_
 #define SWARM_DATA_H_
 #include <ros/ros.h>
+#include <std_msgs/Empty.h>
 #include <thread>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
@@ -160,6 +161,11 @@ public:
 
     bool statistic_;
     ComputationStatistician CS_;
+    // resets CS_.start_t_ on the master trigger, aligning t=0 across the swarm
+    ros::Subscriber trigger_clock_sub_;
+    inline void TriggerClockCallback(const std_msgs::EmptyConstPtr &msg){
+        if(statistic_) CS_.start_t_ = ros::WallTime::now().toSec();
+    }
 };
 
 inline void SwarmDataManager::SetFrontierVpNum(const int vp_num){

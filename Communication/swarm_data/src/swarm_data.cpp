@@ -17,6 +17,8 @@ void SwarmDataManager::init(ros::NodeHandle &nh, ros::NodeHandle &nh_private){
     nh_private.param(ns + "/Exp/finish_thresh", finish_thresh_, 0.5);
 
     if(statistic_) CS_.init(nh, nh_private);
+    // master-trigger clock sync: /takeoff restarts the statistics timeline
+    if(statistic_) trigger_clock_sub_ = nh.subscribe("/takeoff", 1, &SwarmDataManager::TriggerClockCallback, this);
     req_flag_ = false;
     finish_num_ = 0;
     finish_list_.resize(drone_num, false);
@@ -217,10 +219,10 @@ void SwarmDataManager::DTGAnsTimerCallback(const ros::TimerEvent &e){
 
 void SwarmDataManager::PoseMSGCallback(const exp_comm_msgs::IdPoseCConstPtr &msg){
     if(msg->id == self_id_) return;
-    if(statistic_){
-        double v = sizeof(*msg);
-        CS_.AddVolume(v, 2);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg);
+//         CS_.AddVolume(v, 2);
+//     }
     if(msg->id > drone_num_ + 1 || msg->id <= 0){
         ROS_ERROR("strange id%d, max%d, self%d", msg->id, drone_num_ + 1, self_id_);
         return;
@@ -231,10 +233,10 @@ void SwarmDataManager::PoseMSGCallback(const exp_comm_msgs::IdPoseCConstPtr &msg
 
 void SwarmDataManager::TrajMSGCallback(const exp_comm_msgs::SwarmTrajCConstPtr &msg){
     if(msg->id == self_id_) return;
-    if(statistic_){
-        double v = sizeof(*msg) + sizeof(float) * msg->t_p.size() + sizeof(geometry_msgs::Point) * msg->coef_p.size();
-        CS_.AddVolume(v, 3);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg) + sizeof(float) * msg->t_p.size() + sizeof(geometry_msgs::Point) * msg->coef_p.size();
+//         CS_.AddVolume(v, 3);
+//     }
     if(msg->id > drone_num_ + 1 || msg->id <= 0){
         ROS_ERROR("strange id%d, max%d, self%d", msg->id, drone_num_ + 1, self_id_);
         return;
@@ -260,17 +262,17 @@ void SwarmDataManager::TrajMSGCallback(const exp_comm_msgs::SwarmTrajCConstPtr &
 
 void SwarmDataManager::DTGMSGCallback(const exp_comm_msgs::DtgBagCConstPtr &msg){
     if(msg->from_uav == self_id_) return;
-    if(statistic_){
-        double v = sizeof(*msg);
-        v += sizeof(swarm_exp_msgs::DtgHFEdge) * msg->HFedges.size();
-        v += sizeof(swarm_exp_msgs::DtgHHEdge) * msg->HHedges.size();
-        v += sizeof(swarm_exp_msgs::DtgHNode) * msg->Hnodes.size();
-        v += sizeof(swarm_exp_msgs::DtgFNode) * msg->Fnodes.size();
-        for(auto hfe : msg->HFedges) v += sizeof(uint32_t) * hfe.points_idx.size();
-        for(auto hhe : msg->HHedges) v += sizeof(uint32_t) * hhe.points_idx.size();
-        for(auto fn : msg->Fnodes) v += sizeof(uint8_t) * fn.vp_flags.size();
-        CS_.AddVolume(v, 1);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg);
+//         v += sizeof(swarm_exp_msgs::DtgHFEdge) * msg->HFedges.size();
+//         v += sizeof(swarm_exp_msgs::DtgHHEdge) * msg->HHedges.size();
+//         v += sizeof(swarm_exp_msgs::DtgHNode) * msg->Hnodes.size();
+//         v += sizeof(swarm_exp_msgs::DtgFNode) * msg->Fnodes.size();
+//         for(auto hfe : msg->HFedges) v += sizeof(uint32_t) * hfe.points_idx.size();
+//         for(auto hhe : msg->HHedges) v += sizeof(uint32_t) * hhe.points_idx.size();
+//         for(auto fn : msg->Fnodes) v += sizeof(uint8_t) * fn.vp_flags.size();
+//         CS_.AddVolume(v, 1);
+//     }
 
     for(auto &hhe : msg->HHedges){
         swarm_sub_hhe_.emplace_back(hhe);
@@ -331,10 +333,10 @@ void SwarmDataManager::DTGAnsMSGCallback(const exp_comm_msgs::DtgBagAnswerConstP
 
 void SwarmDataManager::JobMSGCallback(const exp_comm_msgs::SwarmJobCConstPtr &msg){
     if(msg->from_uav == self_id_) return;
-    if(statistic_){
-        double v = sizeof(*msg);
-        CS_.AddVolume(v, 4);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg);
+//         CS_.AddVolume(v, 4);
+//     }
     if((msg->JobState & 2) && !finish_list_[msg->from_uav - 1]){ 
         finish_num_++;
         finish_list_[msg->from_uav - 1] = true;
@@ -355,12 +357,12 @@ void SwarmDataManager::JobMSGCallback(const exp_comm_msgs::SwarmJobCConstPtr &ms
 
 void SwarmDataManager::StateMSGCallback(const exp_comm_msgs::SwarmStateCConstPtr &msg){
     if(msg->from_uav == self_id_) return;
-    if(statistic_){
-        double v = sizeof(*msg) + sizeof(uint16_t) * msg->connect_fn.size() + sizeof(uint32_t) * msg->connect_hn.size()
-        + sizeof(float) * msg->dist_to_connect_fn.size() + sizeof(float) * msg->dist_to_connect_hn.size() + sizeof(float) * msg->dist_to_local_fn.size()
-        + sizeof(uint32_t) * msg->hn_pos_idx.size() + sizeof(uint16_t) * msg->local_fn.size();
-        CS_.AddVolume(v, 5);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg) + sizeof(uint16_t) * msg->connect_fn.size() + sizeof(uint32_t) * msg->connect_hn.size()
+//         + sizeof(float) * msg->dist_to_connect_fn.size() + sizeof(float) * msg->dist_to_connect_hn.size() + sizeof(float) * msg->dist_to_local_fn.size()
+//         + sizeof(uint32_t) * msg->hn_pos_idx.size() + sizeof(uint16_t) * msg->local_fn.size();
+//         CS_.AddVolume(v, 5);
+//     }
     if(msg->from_uav > drone_num_ + 1 || msg->from_uav <= 0){
         ROS_ERROR("strange id%d, max%d, self%d", msg->from_uav, drone_num_ + 1, self_id_);
         return;
@@ -369,20 +371,20 @@ void SwarmDataManager::StateMSGCallback(const exp_comm_msgs::SwarmStateCConstPtr
 }
 
 void SwarmDataManager::MapMSGCallback(const exp_comm_msgs::MapCConstPtr &msg){
-    if(statistic_){
-        double v = sizeof(*msg) + msg->flags.size() * sizeof(uint8_t);
-        CS_.AddVolume(v, 6);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg) + msg->flags.size() * sizeof(uint8_t);
+//         CS_.AddVolume(v, 6);
+//     }
     // debug_l_<<"f:"<<int(msg->f_id)<<"  b:"<<int(msg->block_id)<<"  state:"<<int(msg->block_state)<<" finish:"<<finish_num_<<endl;
     swarm_sub_map_.emplace_back(*msg);
 }
 
 void SwarmDataManager::MapReqMSGCallback(const exp_comm_msgs::MapReqCConstPtr &msg){
     if(is_ground_) return;
-    if(statistic_){
-        double v = sizeof(*msg) + msg->block_id.size() * sizeof(uint8_t) + msg->f_id.size() * sizeof(uint16_t);
-        CS_.AddVolume(v, 7);
-    }
+    // [bw_statistic node took over] if(statistic_){
+//         double v = sizeof(*msg) + msg->block_id.size() * sizeof(uint8_t) + msg->f_id.size() * sizeof(uint16_t);
+//         CS_.AddVolume(v, 7);
+//     }
     if(msg->flag) finish_list_[self_id_ - 1] = true;
     mreq_ = *msg;
     req_flag_ = true;

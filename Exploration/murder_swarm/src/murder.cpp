@@ -1,4 +1,5 @@
 #include<murder_swarm/murder.h>
+#include <cmath>
 
 
 void Murder::init(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private){
@@ -66,6 +67,10 @@ void Murder::init(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private){
     // CreateVisModel();
     last_safe_ = init_pose_.head(3);
     home_p_ = init_pose_.head(3);
+    // p_/v_ 必须初始化：FSM 定时器第一拍就会用 p_ 查 IsFeasible，
+    // 若 odometry 未到且 p_ 是含 NaN 的垃圾值，InsideMap 会误判在图内导致越界
+    p_ = init_pose_.head(3);
+    v_.setZero();
 
     last_map_update_t_ = ros::WallTime::now().toSec();
     traj_end_t_ = last_map_update_t_ - 0.1;
@@ -74,6 +79,7 @@ void Murder::init(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private){
     target_v_id_ = -1;
     sensor_flag_ = false;
     if(FG_.sensor_type_ == SensorType::CAMERA){
+        pose_map_update_ = nh_.advertise<geometry_msgs::PoseStamped>(ns + "/mapping_pose", 100);
         depth_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(nh_, "/depth", 10));
         vi_odom_sub_.reset(new message_filters::Subscriber<nav_msgs::Odometry>(nh_, "/vi_odom", 10));
         sync_image_odom_.reset(new message_filters::Synchronizer<SyncPolicyImageOdom>(
@@ -107,6 +113,11 @@ void Murder::BroadCastFinish(){
 }
 
 int Murder::AllowPlan(const double &T){
+    /* odometry not received yet, nothing to plan from */
+    if(!have_odom_){
+        return 1;
+    }
+
     /* not satisfy plan interval */
     if(T - plan_t_ < 0){
         return 1;
@@ -157,21 +168,27 @@ bool Murder::GoHome(){
         ydde = 0;
     }
     else{
-        ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+        // 时间差双向截断：时钟回跳时防止在负时间上求值，产生巨大 vs/as 污染优化器
+        const double td_max = max(TrajOpt_.traj.getTotalDuration() - 1e-4, 0.0);
+        double td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+        ps = TrajOpt_.traj.getPos(td);
         while(!LRM_.IsFeasible(ps) && hand_t > cur_t){
             hand_t -= reach_out_t_ / 10;
-            ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+            td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+            ps = TrajOpt_.traj.getPos(td);
         }
+        vs = TrajOpt_.traj.getVel(td);
+        as = TrajOpt_.traj.getAcc(td);
         if(!LRM_.IsFeasible(ps)){
             hand_t = cur_t;
             ps = p_;
+            vs = v_;
+            as.setZero();
         }
-        vs = TrajOpt_.traj.getVel(hand_t - traj_start_t_);
-        as = TrajOpt_.traj.getAcc(hand_t - traj_start_t_);
         ve.setZero();
         ae.setZero();
-        YawP_.GetCmd(hand_t - traj_start_t_, ys, yds, ydds);
-        yde = 0; 
+        YawP_.GetCmd(td, ys, yds, ydds);
+        yde = 0;
         ydde = 0;
     }
     pe = home_p_;
@@ -212,24 +229,30 @@ bool Murder::LocalPlan(){
         ydde = 0;
     }
     else{
-        ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+        // 时间差双向截断：时钟回跳时防止在负时间上求值，产生巨大 vs/as 污染优化器
+        const double td_max = max(TrajOpt_.traj.getTotalDuration() - 1e-4, 0.0);
+        double td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+        ps = TrajOpt_.traj.getPos(td);
         while(!LRM_.IsFeasible(ps) && hand_t > cur_t){
             hand_t -= reach_out_t_ / 10;
-            ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+            td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+            ps = TrajOpt_.traj.getPos(td);
         }
+        vs = TrajOpt_.traj.getVel(td);
+        as = TrajOpt_.traj.getAcc(td);
         if(!LRM_.IsFeasible(ps)){
             hand_t = cur_t;
             ps = p_;
+            vs = v_;
+            as.setZero();
         }
-        vs = TrajOpt_.traj.getVel(hand_t - traj_start_t_);
-        as = TrajOpt_.traj.getAcc(hand_t - traj_start_t_);
         ve.setZero();
         ae.setZero();
-        YawP_.GetCmd(hand_t - traj_start_t_, ys, yds, ydds);
-        yde = 0; 
+        YawP_.GetCmd(td, ys, yds, ydds);
+        yde = 0;
         ydde = 0;
     }
-    if(SDM_.statistic_) SDM_.CS_.StartTimer(1);
+    const double ts_local_plan = SDM_.statistic_ ? ros::WallTime::now().toSec() : 0.0;
 
     /* sample vps befor planning */
     if(!FG_.sample_flag_){
@@ -286,7 +309,7 @@ bool Murder::LocalPlan(){
     }
     default: // no path
         GVP_.SetJob(0, -1, path_cost, -1, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_local_plan, 1);
         return false;                        
         break;
     }
@@ -370,7 +393,7 @@ bool Murder::LocalPlan(){
         // " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
         PublishTraj(false);        
         GVP_.SetJob(4, f_v.first, path_cost, h_id, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_local_plan, 1);
         return true;
     }
     else{
@@ -379,7 +402,7 @@ bool Murder::LocalPlan(){
         ROS_WARN("id:%d LocalPlan fail", SDM_.self_id_);
         MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
         GVP_.SetJob(0, -1, path_cost, -1, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(1);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_local_plan, 1);
         return false;
     }
 }
@@ -410,24 +433,30 @@ bool Murder::GlobalPlan(){
         ydde = 0;
     }
     else{
-        ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+        // 时间差双向截断：时钟回跳时防止在负时间上求值，产生巨大 vs/as 污染优化器
+        const double td_max = max(TrajOpt_.traj.getTotalDuration() - 1e-4, 0.0);
+        double td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+        ps = TrajOpt_.traj.getPos(td);
         while(!LRM_.IsFeasible(ps) && hand_t > cur_t){
             hand_t -= reach_out_t_ / 10;
-            ps = TrajOpt_.traj.getPos(hand_t - traj_start_t_);
+            td = min(max(hand_t - traj_start_t_, 0.0), td_max);
+            ps = TrajOpt_.traj.getPos(td);
         }
+        vs = TrajOpt_.traj.getVel(td);
+        as = TrajOpt_.traj.getAcc(td);
         if(!LRM_.IsFeasible(ps)){
             hand_t = cur_t;
             ps = p_;
+            vs = v_;
+            as.setZero();
         }
-        vs = TrajOpt_.traj.getVel(hand_t - traj_start_t_);
-        as = TrajOpt_.traj.getAcc(hand_t - traj_start_t_);
         ve.setZero();
         ae.setZero();
-        YawP_.GetCmd(hand_t - traj_start_t_, ys, yds, ydds);
-        yde = 0; 
+        YawP_.GetCmd(td, ys, yds, ydds);
+        yde = 0;
         ydde = 0;
     }
-    if(SDM_.statistic_) SDM_.CS_.StartTimer(2);
+    const double ts_global_plan = SDM_.statistic_ ? ros::WallTime::now().toSec() : 0.0;
 
     /* go to the most promising target */
     Eigen::Vector4d c_state, t_state;
@@ -496,7 +525,7 @@ bool Murder::GlobalPlan(){
     }
     default: // no path
         GVP_.SetJob(5, -1, path_cost, -1, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_global_plan, 2);
         return false;                        
         break;
     }
@@ -506,7 +535,7 @@ bool Murder::GlobalPlan(){
         if(f_v.first >= 0 && f_v.first < FG_.f_grid_.size() && 0 <= f_v.second && f_v.second < FG_.f_grid_[f_v.first].local_vps_.size())
             MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
         GVP_.SetJob(0, -1, path_cost, -1, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_global_plan, 2);
         return false;           
     }
 
@@ -564,7 +593,7 @@ bool Murder::GlobalPlan(){
         // " dur:"<<TrajOpt_.traj.getTotalDuration()<<endl;
         PublishTraj(false);
         GVP_.SetJob(5, f_v.first, path_cost, h_id, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_global_plan, 2);
         return true;
     }
     else{
@@ -573,7 +602,7 @@ bool Murder::GlobalPlan(){
         ROS_WARN("id:%d GlobalPlan fail", SDM_.self_id_);
         MDTG_.RemoveVp(FG_.f_grid_[f_v.first].center_, f_v.first, f_v.second, true);
         GVP_.SetJob(0, -1, path_cost, -1, path_cost);
-        if(SDM_.statistic_) SDM_.CS_.EndTimer(2);
+        if(SDM_.statistic_) SDM_.CS_.SetVolume(ros::WallTime::now().toSec() - ts_global_plan, 2);
         return false;
     }
 
@@ -952,7 +981,7 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
 
         if(LRM_.FindCorridors(path, h, p, path_pruned, traj_length_)){
             Eigen::Matrix3d startpva, endpva;
-            double min_t = YawP_.GetMinT(yps, ype) - 1e-3;
+            double min_t = max(YawP_.GetMinT(yps, ype) - 1e-3, 1e-3);
             startpva.setZero();
             endpva.setZero();
             startpva.col(0) = ps;
@@ -965,6 +994,21 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
             }
             SDM_.GetLocalSwarmPos(swarm_p);
             if(TrajOpt_.Optimize(path_pruned, h, p, min_t, startpva, endpva, SDM_.self_id_, SDM_.trajs_, SDM_.start_t_, swarm_p, handt)){
+                // 健全性检查：时长/系数异常的轨迹按失败处理，避免发布垃圾轨迹、
+                // 并防止 PlanYaw 按天文数字时长分配巨型矩阵导致 bad_alloc
+                const double opt_total_t = TrajOpt_.traj.getTotalDuration();
+                bool insane_traj = !std::isfinite(opt_total_t) || opt_total_t <= 0.0 || opt_total_t > 100.0;
+                // 采样位置越界检查：拦住"系数巨大但有限"的轨迹（执行端过滤的上游等价物）
+                for(double st = 0.0; !insane_traj && st <= opt_total_t; st += 0.5){
+                    Eigen::Vector3d sp = TrajOpt_.traj.getPos(st);
+                    insane_traj = !sp.allFinite() || sp.cwiseAbs().maxCoeff() > 100.0;
+                }
+                for(int i = 0; !insane_traj && i < TrajOpt_.traj.getPieceNum(); i++)
+                    insane_traj = !TrajOpt_.traj[i].getCoeffMat().allFinite();
+                if(insane_traj){
+                    ROS_ERROR("id:%d reject insane traj (T=%.3e)", int(SDM_.self_id_), opt_total_t);
+                    return false;
+                }
                 Eigen::Vector3d traj_end = TrajOpt_.traj.getPos(TrajOpt_.traj.getTotalDuration());
                 ShowTraj(path, h);
                 // for(auto &p : path){//debug
@@ -1011,10 +1055,16 @@ bool Murder::TrajPlanB(const Eigen::Vector3d &ps, const Eigen::Vector3d &vs, con
     }
 }
 
-void Murder::PlanYaw(const double &yps, const double &yds, const double &ydds, const double &ype, 
+void Murder::PlanYaw(const double &yps, const double &yds, const double &ydds, const double &ype,
             const double &yde, const double &ydde, const Eigen::Vector3d &gazept, bool gaze){
     Eigen::VectorXd T, yaw_l;
     double total_t = TrajOpt_.traj.getTotalDuration();
+    // 防线：时长异常直接跳过 yaw 规划，避免 SampleT/Plan 按天文数字时长分配内存
+    // （下限 1e-6 与 TrajPlanB 的 min_t 下限对齐，悬停小轨迹也能生成合法 yaw）
+    if(!std::isfinite(total_t) || total_t <= 1e-6 || total_t > 100.0){
+        ROS_ERROR("id:%d PlanYaw skip insane duration %.3e", int(SDM_.self_id_), total_t);
+        return;
+    }
     YawP_.SampleT(total_t, T);
     yaw_l.resize(T.size()+1);
     yaw_l(0) = yps;
@@ -1102,7 +1152,7 @@ void Murder::PublishTraj(bool recover){
 
 void Murder::ImgOdomCallback(const sensor_msgs::ImageConstPtr& img,
                             const nav_msgs::OdometryConstPtr& odom){
-    if(ros::WallTime::now().toSec() - last_map_update_t_ < 0.2 || !have_odom_) return;
+    if(ros::WallTime::now().toSec() - last_map_update_t_ < 0.1 || !have_odom_) return;
     last_map_update_t_ = ros::WallTime::now().toSec(); 
     ros::WallTime t0 = ros::WallTime::now();
     BM_.OdomCallback(odom);
@@ -1110,6 +1160,10 @@ void Murder::ImgOdomCallback(const sensor_msgs::ImageConstPtr& img,
     BM_.InsertImg(img);
     FG_.UpdateFrontier(BM_.newly_register_idx_);
     MDTG_.Update(robot_pose_, !sensor_flag_);
+    geometry_msgs::PoseStamped pm;
+    pm.header = odom->header;
+    pm.pose = odom->pose.pose;
+    pose_map_update_.publish(pm);
     sensor_flag_ = true;
 }
 

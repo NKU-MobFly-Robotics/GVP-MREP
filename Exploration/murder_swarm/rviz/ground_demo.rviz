@@ -63,13 +63,13 @@ Visualization Manager:
     - Class: rviz/Group
       Displays:
         - Class: rviz/MarkerArray
-          Enabled: true
+          Enabled: false
           Marker Topic: /ground_node/block_map/voxvis
           Name: MapVis
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
-          Value: true
+          Value: false
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /ground_node/Frontier/grid
@@ -777,7 +777,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 47.1061897277832
+      Distance: 77.04686737060547
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -785,17 +785,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 4.172554016113281
-        Y: 0.3358701765537262
-        Z: -4.8742170333862305
+        X: -0.06788262724876404
+        Y: -3.8363196849823
+        Z: -6.088430881500244
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2647969722747803
+      Pitch: 1.389796495437622
       Target Frame: <Fixed Frame>
-      Yaw: 3.1364693641662598
+      Yaw: 3.171471118927002
     Saved: ~
 Window Geometry:
   Displays:

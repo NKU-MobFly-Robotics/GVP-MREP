@@ -307,9 +307,16 @@ void LowResMap::ExpandTopoMap(){
     Eigen::Vector3i robot_pid;
     PostoId3(Robot_pos_, robot_pid);
 
-    Rootnode_ = GetNode(Robot_pos_);
+    // 根因修复(ASan 排除内存破坏后实测确认)：原始 Robot_pos_ 落在体素边界时
+    // (如 ±25 地图 x=0 恰为 36*0.7-25.2)，PostoId3 的全局取整与 GetNodeId 的
+    // 相对取整因浮点舍入会分到相邻格子——sch 指向格子 A、节点建在格子 B。
+    // 根查找/建根必须与 c_node->pos_(PostoId3)和 SetNode 消费端同源：统一用格心。
+    Eigen::Vector3d root_center = (robot_pid.cast<double>()
+        + Eigen::Vector3d(0.5, 0.5, 0.5)).cwiseProduct(node_scale_) + origin_;
+    Rootnode_ = GetNode(root_center);
+    if(Rootnode_ == Expandnode_) Rootnode_ = NULL;
     shared_ptr<LR_node> lr_node;
-    prio_D empty_TS, empty_NTS; 
+    prio_D empty_TS, empty_NTS;
     shared_ptr<sch_node> c_node, ep_node;
 
     open_TS_.swap(empty_TS);
@@ -320,7 +327,7 @@ void LowResMap::ExpandTopoMap(){
     if(Rootnode_ == NULL){
         open_NTS_.push(c_node);
         std::cout <<Robot_pos_.transpose()<<"\033[0;34m New root \033[0m" << std::endl;
-        SetTopoNode(Robot_pos_, Rootnode_, c_node);
+        SetTopoNode(root_center, Rootnode_, c_node);
     }
     else if(Rootnode_ == Outnode_){
         std::cout <<Robot_pos_.transpose()<<"\033[0;31m Outside!!!!! \033[0m" << std::endl;
@@ -373,6 +380,13 @@ void LowResMap::ExpandTopoMap(){
             ep_node->status_ = in_close;
             int id = ep_node->pos_(0) + ep_node->pos_(1) * v_n_(0) + ep_node->pos_(2) * v_n_(1);
             pos = (ep_node->pos_.cast<double>() + offset).cwiseProduct(node_scale_)+origin_;
+            // 与 NTS 循环一致：sch 跨轮残留会导致同格双入队，该格可能已在
+            // 本轮搜索中被标为 X(占据)，此时不得再 SetNode 进 Topolist_
+            //(DIAG SetNode on X node 已实证该路径，否则过期释放后留下悬空条目)
+            {
+                shared_ptr<LR_node> cn = GetNode(pos);
+                if(cn != NULL && cn->flags_[0]) continue;
+            }
             GetTopoNeighbours(ep_node);
             SetNode(pos, true);
             localnode_list_.push_back(id);

@@ -1035,6 +1035,10 @@ inline void LowResMap::GetTopoNeighbours(shared_ptr<sch_node> &node){
             diff(dim) = off;
             pos = IdtoPos(diff+node->pos_);
             lr_node = GetNode(pos);
+            // 根因修复：Expandnode_ 哨兵对拓扑层等于"未访问"，必须走下方 SetTopoNode
+            // 正规建节点路径；否则会把 sch 写到全局共享的哨兵上（别名污染），后续
+            // SetNode 晋升出的新节点 topo_sch_ 为 NULL
+            if(lr_node == Expandnode_) lr_node = NULL;
             double g = node->g_score_ + GetDist(diff(0), diff(1), diff(2));
             if((g > max_g_cost_ || (Robot_pos_ - pos).norm() > eu_range_)) continue;
 
@@ -1198,7 +1202,9 @@ inline pair<int,int> LowResMap::SetNode(const Eigen::Vector3d &pos, bool get_h){
         //set node
         int nodeid = GetNodeId(pos, gridBLK_[blkid]);
         if(gridBLK_[blkid]->local_grid_[nodeid] == NULL){
+            // 补完作者的报错分支（原实现在此报错后继续解引用必然崩溃，实测 @0x30）
             ROS_ERROR("Expanding NULL NODE %d %d!!!", blkid, nodeid);
+            return {-1, -1};
         }
         else if(gridBLK_[blkid]->local_grid_[nodeid] == Expandnode_){
             gridBLK_[blkid]->local_grid_[nodeid] = make_shared<LR_node>();
@@ -1208,6 +1214,12 @@ inline pair<int,int> LowResMap::SetNode(const Eigen::Vector3d &pos, bool get_h){
         gridBLK_[blkid]->local_grid_[nodeid]->flags_.set(1);
 
         if(get_h) {
+            // 入表前提：本轮搜索已为该节点挂上 sch。sch 为空说明该槽位未经正规
+            // 入队（SetNode 实测崩溃点 @0x40），跳过入表避免 Topolist_ 悬空条目
+            if(gridBLK_[blkid]->local_grid_[nodeid]->topo_sch_ == NULL){
+                ROS_WARN_THROTTLE(1.0, "SetNode: sch null, skip Topolist push blk=%d nid=%d", blkid, nodeid);
+                return {blkid, nodeid};
+            }
             Topolist_.push_back({blkid, nodeid});
             PostoId3(pos, blockid);//
             int idx = PostoId(pos);
@@ -1345,7 +1357,8 @@ inline void LowResMap::SetTopoNode(const Eigen::Vector3d &pos, shared_ptr<LR_nod
         }
         //set node
         int nodeid = GetNodeId(pos, gridBLK_[blkid]);
-        if(gridBLK_[blkid]->local_grid_[nodeid] != NULL){
+        if(gridBLK_[blkid]->local_grid_[nodeid] != NULL &&
+            gridBLK_[blkid]->local_grid_[nodeid] != Expandnode_){
             ROS_ERROR("Expanding NULL TOPO NODE %d %d!!!", blkid, nodeid);
         }
         else{

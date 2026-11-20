@@ -85,7 +85,7 @@ Exp/takeoff_z: 1.0
 Exp/takeoff_yaw: 0.0
 Exp/reach_out_t: 0.1
 Exp/AutoTakeoff: true
-Exp/statistic: true
+Exp/statistic: false  # ground station must not write statistics
 Exp/finish_thresh: 0.5
 
 #swarm
@@ -148,19 +148,3 @@ opt/smoothingEps: 0.01
 opt/integralIntervs: 16
 opt/RelCostTolL: 1.0e-5
 
-Computation/data_num: 3
-Computation/dir: /home/charliedog/data/swarm/maze4/MURDER
-Computation/data_name0: gvp
-Computation/data_name1: local
-Computation/data_name2: global
-
-Computation/vdata_num: 9
-Computation/vdata_name0: volume
-Computation/vdata_name1: DTG
-Computation/vdata_name2: pose
-Computation/vdata_name3: traj
-Computation/vdata_name4: job
-Computation/vdata_name5: state
-Computation/vdata_name6: map
-Computation/vdata_name7: mapreq
-Computation/vdata_name8: total

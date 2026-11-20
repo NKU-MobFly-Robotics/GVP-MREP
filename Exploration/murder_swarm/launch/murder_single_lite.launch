@@ -9,14 +9,18 @@
 
     <node name="murder_$(arg id)" pkg="murder_swarm" type="murder_swarm_node" output="screen">
         <rosparam command="load" file="$(find block_map)/color/Paranoid.yaml" />
-        <rosparam command="load" file="$(find murder_swarm)/resource/murder_$(arg world).yaml" />
+        <rosparam command="load" file="$(find murder_swarm)/resource/murder_$(arg world)_lite.yaml" />
         <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
         <param name="Exp/UAV_id" value="$(arg id)" type="int"/>
         <param name="Exp/drone_num" value="$(arg drone_num)" type="int"/>
+        <!-- id/num read by ComputationStatistician::init (FAME class convention) -->
+        <param name="exploration/drone_id" value="$(arg id)" type="int"/>
+        <param name="exploration/drone_num" value="$(arg drone_num)" type="int"/>
         <param name="Exp/takeoff_x" value="$(arg init_x)" />
         <param name="Exp/takeoff_y" value="$(arg init_y)" />
         <param name="Exp/takeoff_z" value="1.5" />
 
+        <remap from="/murder_$(arg id)/mapping_pose" to="/mapping_pose_$(arg id)"/>
         <remap from="/depth" to="/pcl_render_node/depth_$(arg id)"/>
         <remap from="/pointcloud" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/points"/>
         <remap from="/odom" to="/firefly$(arg id)/ground_truth/odometry"/>

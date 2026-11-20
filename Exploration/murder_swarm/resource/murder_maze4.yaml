@@ -85,7 +85,7 @@ Exp/takeoff_y: 0.0
 Exp/takeoff_z: 1.0
 Exp/takeoff_yaw: 0.0
 Exp/reach_out_t: 0.1
-Exp/AutoTakeoff: true
+Exp/AutoTakeoff: false  # wait for the /takeoff master trigger instead of taking off at startup
 Exp/acc_off: -0.5
 Exp/statistic: true
 Exp/finish_thresh: 0.5
@@ -151,19 +151,13 @@ opt/smoothingEps: 0.01
 opt/integralIntervs: 16
 opt/RelCostTolL: 1.0e-5
 
-Computation/data_num: 3
-Computation/dir: /home/charliedog/data/swarm/maze4/MURDER
-Computation/data_name0: gvp
-Computation/data_name1: local
-Computation/data_name2: global
+Computation/vdata_num: 6
+Computation/dir: /home/charliedog/data/swarm_cd/gvp/maze4/uav
+Computation/vdata_name0: gvp
+Computation/vdata_name1: local
+Computation/vdata_name2: global
+Computation/vdata_name3: volume
+Computation/vdata_name4: distance
+Computation/vdata_name5: finish
 
-Computation/vdata_num: 9
-Computation/vdata_name0: volume
-Computation/vdata_name1: DTG
-Computation/vdata_name2: pose
-Computation/vdata_name3: traj
-Computation/vdata_name4: job
-Computation/vdata_name5: state
-Computation/vdata_name6: map
-Computation/vdata_name7: mapreq
-Computation/vdata_name8: total
+

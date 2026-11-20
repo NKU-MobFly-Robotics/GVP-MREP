@@ -1,0 +1,15 @@
+<launch>
+    <arg name="drone_num" default="3" />
+    <arg name="world" default="maze4" />
+
+    <node name="bw_statistic" pkg="bw_statistic" type="bw_statistic_node" output="screen">
+        <rosparam command="load" file="$(find murder_swarm)/resource/bw_$(arg world).yaml" />
+        <!-- the master trigger of GVP is /takeoff -->
+        <remap from="/kick_start" to="/takeoff" />
+        <param name="Exp/drone_num" value="$(arg drone_num)" type="int" />
+        <!-- id/num read by ComputationStatistician::init (FAME class convention) -->
+        <param name="exploration/drone_id" value="1" type="int" />
+        <param name="exploration/drone_num" value="$(arg drone_num)" type="int" />
+    </node>
+
+</launch>

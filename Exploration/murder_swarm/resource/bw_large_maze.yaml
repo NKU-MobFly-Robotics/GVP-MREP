@@ -1,0 +1,13 @@
+Exp/statistic: true
+
+
+Computation/vdata_num: 8
+Computation/dir: /home/charliedog/data/swarm_cd/gvp/large_maze/bw
+Computation/vdata_name0: pose
+Computation/vdata_name1: DTG
+Computation/vdata_name2: traj
+Computation/vdata_name3: job
+Computation/vdata_name4: state
+Computation/vdata_name5: map
+Computation/vdata_name6: mapreq
+Computation/vdata_name7: finish

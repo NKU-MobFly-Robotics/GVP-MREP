@@ -40,45 +40,84 @@ ros::Timer run_timer_;
 void Showcmd(Eigen::Vector3d pos, double yaw);
 bool TryUpdateTraj();
 
+// FAME-aligned takeoff: climb to takeoff_z over 30 x 33 ms, then fly forward
+// 1.25 m at 0.5 m/s (yaw fixed), no settle, then publish the start trigger.
 void Takeoff(const std_msgs::EmptyPtr &msg){
     trajectory_msgs::MultiDOFJointTrajectoryPoint trajectory_point_msg;
     mav_msgs::EigenTrajectoryPoint trajectory_point;
     quadrotor_msgs::PositionCommand cmd_lite;
 
-    trajectory_point.position_W.x() = takeoff_pos_(0);
-    trajectory_point.position_W.y() = takeoff_pos_(1);
-    cmd_lite.yaw = 0.0;
+    cmd_lite.header.stamp = ros::Time::now();
+    cmd_lite.trajectory_id = 0;
     cmd_lite.position.x = takeoff_pos_(0);
     cmd_lite.position.y = takeoff_pos_(1);
+    cmd_lite.position.z = takeoff_pos_(2);
+    cmd_lite.velocity.x = 0.0;
+    cmd_lite.velocity.y = 0.0;
+    cmd_lite.velocity.z = 0.0;
+    cmd_lite.acceleration.x = 0.0;
+    cmd_lite.acceleration.y = 0.0;
+    cmd_lite.acceleration.z = 0.0;
+    cmd_lite.yaw = 0.0;
+    cmd_lite.yaw_dot = 0.0;
 
+    trajectory_point.position_W.x() = takeoff_pos_(0);
+    trajectory_point.position_W.y() = takeoff_pos_(1);
     trajectory_point.orientation_W_B.w() = 1.0;
-    trajectory_point.orientation_W_B.z() = 0.0;
-    for(double l = 0.0; l < 1.0; l += 0.01){
-        trajectory_msgs::MultiDOFJointTrajectory samples_array;
-        trajectory_point.position_W.z() = takeoff_pos_(2)*l;
-        trajectory_point.orientation_W_B.z() = sin(M_PI * (l));
-        trajectory_point.orientation_W_B.w() = cos(M_PI * l);
-        cmd_lite.position.z = takeoff_pos_(2)*l;
-        cmd_lite.yaw = M_PI * l * 2;
-        mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
-        samples_array.points.push_back(trajectory_point_msg);
-        control_pub_.publish(samples_array);
-        control_l_pub_.publish(cmd_lite);
-        ros::Duration(2.0/100).sleep();
-    }
-    ros::Duration(0.5).sleep();
-    for(double l = 0.0; l < 1.0; l += 0.01){    
-        trajectory_msgs::MultiDOFJointTrajectory samples_array;
-        trajectory_point.position_W.x() += 0.01 * 1.5;
-        cmd_lite.position.x += 0.01 * 1.5;
 
+    for(int i = 0; i < 30; i++){
+        trajectory_msgs::MultiDOFJointTrajectory samples_array;
+        ros::Duration(0.033).sleep();
+        const double ratio = static_cast<double>(i + 1) / 30.0;
+        trajectory_point.position_W.z() = takeoff_pos_(2) * ratio;
+        cmd_lite.position.z = takeoff_pos_(2) * ratio;
         mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
         samples_array.points.push_back(trajectory_point_msg);
         control_pub_.publish(samples_array);
         control_l_pub_.publish(cmd_lite);
-        ros::Duration(1.0/100).sleep();
     }
-    ros::Duration(1.5).sleep();
+    trajectory_point.position_W.z() = takeoff_pos_(2);
+    cmd_lite.position.z = takeoff_pos_(2);
+    cmd_lite.velocity.x = cmd_lite.velocity.y = cmd_lite.velocity.z = 0.0;
+    {
+        trajectory_msgs::MultiDOFJointTrajectory samples_array;
+        mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
+        samples_array.points.push_back(trajectory_point_msg);
+        control_pub_.publish(samples_array);
+        control_l_pub_.publish(cmd_lite);
+    }
+
+    // forward flight, same as FAME: 1.25 m at 0.5 m/s along +x, yaw 0
+    const double forward_dist = 1.45;
+    const double forward_vel = 0.5;
+    const double forward_duration = forward_dist / forward_vel;
+    const ros::WallTime forward_start = ros::WallTime::now();
+    while(ros::ok() && (ros::WallTime::now() - forward_start).toSec() < forward_duration){
+        const double ratio = min(1.0,
+            (ros::WallTime::now() - forward_start).toSec() / forward_duration);
+        trajectory_msgs::MultiDOFJointTrajectory samples_array;
+        const double fx = takeoff_pos_(0) + ratio * forward_dist;
+        trajectory_point.position_W.x() = fx;
+        cmd_lite.position.x = fx;
+        cmd_lite.velocity.x = forward_vel;
+        mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
+        samples_array.points.push_back(trajectory_point_msg);
+        control_pub_.publish(samples_array);
+        control_l_pub_.publish(cmd_lite);
+        ros::spinOnce();
+        ros::WallDuration(0.033).sleep();
+    }
+    trajectory_point.position_W.x() = takeoff_pos_(0) + forward_dist;
+    cmd_lite.position.x = takeoff_pos_(0) + forward_dist;
+    cmd_lite.velocity.x = 0.0;
+    {
+        trajectory_msgs::MultiDOFJointTrajectory samples_array;
+        mav_msgs::msgMultiDofJointTrajectoryPointFromEigen(trajectory_point, &trajectory_point_msg);
+        samples_array.points.push_back(trajectory_point_msg);
+        control_pub_.publish(samples_array);
+        control_l_pub_.publish(cmd_lite);
+    }
+
     trigger_pub_.publish(*msg);
     ready_ = true;
     takeoff_sub_.shutdown();
@@ -95,7 +134,7 @@ void RunCallback(const ros::TimerEvent &e){
     double yaw, yawd, yawdd;
     // ROS_WARN("run0");
     while (TryUpdateTraj()){}
-    if(traj_state_ == 1){
+    if(traj_state_ == 1 && false){
         p = recover_pt_ - robot_pos_;
         p = robot_pos_ + min(p.norm(), 0.3) * p.normalized();
         v.setZero();
@@ -107,19 +146,31 @@ void RunCallback(const ros::TimerEvent &e){
     else if(traj_state_ == 2){
         // cout<<traj_.getPieceNum()<<endl;
         double cur_t = ros::WallTime::now().toSec();
-        if(cur_t - start_t_> traj_.getTotalDuration()){
-            cur_t = start_t_ + traj_.getTotalDuration() - 1e-4;
-            v.setZero();
-            a.setZero();
+        // if(cur_t - start_t_> traj_.getTotalDuration()){
+        //     cur_t = start_t_ + traj_.getTotalDuration() - 1e-4;
+        //     v.setZero();
+        //     a.setZero();
+        // }
+        // else{
+        //     v = traj_.getVel(cur_t - start_t_);
+        //     a = traj_.getAcc(cur_t - start_t_);
+        // }
+        // p = traj_.getPos(cur_t - start_t_);
+
+        double t = cur_t - start_t_;
+        if (t < 0.0) t = 0.0;                                   // 补下界
+        if (t > traj_.getTotalDuration()) {
+            t = traj_.getTotalDuration() - 1e-4;
+            v.setZero(); a.setZero();
+        } else {
+            v = traj_.getVel(t); a = traj_.getAcc(t);
         }
-        else{
-            v = traj_.getVel(cur_t - start_t_);
-            a = traj_.getAcc(cur_t - start_t_);
-        }
-        p = traj_.getPos(cur_t - start_t_);
+        p = traj_.getPos(t);
+        yaw_traj_.GetCmd(t, yaw, yawd, yawdd);
+
 
         // yaw_traj_.GetCmd(min((cur_t - start_t_)*1.3, cur_t - start_t_ + 0.3), yaw, yawd, yawdd);
-        yaw_traj_.GetCmd(cur_t - start_t_, yaw, yawd, yawdd);
+        // yaw_traj_.GetCmd(cur_t - start_t_, yaw, yawd, yawdd);
         // double temp_yaw;
         // yaw_traj_.GetCmd(cur_t - start_t_, temp_yaw, yawd, yawdd);
         if(v.norm() > max_v_)
@@ -130,6 +181,15 @@ void RunCallback(const ros::TimerEvent &e){
         if(abs(yawdd) > max_yawdd_) yawdd = yawdd / abs(yawdd) * max_yawdd_;
     }
     else return;
+
+    // 执行端兜底：位置超过 ±100m 或非有限值时强制跳过本周期命令，
+    // poscmd_2_odom 会保持上一条合法命令，阻断发散值进入 odometry 反馈环
+    if(!p.allFinite() || p.cwiseAbs().maxCoeff() > 100.0){
+        ROS_ERROR_THROTTLE(1.0, "traj_exc: skip insane position cmd (%.3e, %.3e, %.3e)",
+                           p.x(), p.y(), p.z());
+        return;
+    }
+
     trajectory_point.position_W.x() = p.x();
     trajectory_point.position_W.y() = p.y();
     trajectory_point.position_W.z() = p.z();

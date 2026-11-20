@@ -10,7 +10,7 @@
         <rosparam command="load" file="$(find block_map)/color/color_id.yaml" />
         <param name="Exp/UAV_id" value="$(arg id)" type="int"/>
         <param name="Exp/drone_num" value="$(arg drone_num)" type="int"/>
-
+        <param name="Exp/statistic" value="false" />
         <!-- <remap from="/depth" to="/firefly$(arg id)/vi_sensor/camera_depth/depth/disparity"/>
         <remap from="/odom" to="/firefly$(arg id)/ground_truth/odometry"/>
         <remap from="/vi_odom" to="/firefly$(arg id)/vi_sensor/ground_truth/odometry"/>

@@ -502,7 +502,7 @@ void BlockMap::SwarmMapCallback(const ros::TimerEvent &e){
             SDM_->SetMapReq(mq);
         }
         if(SDM_->statistic_ && stat_){
-            SDM_->CS_.SetVolume(stat_n_ * pow(resolution_, 3), 0);
+            // SDM_->CS_.SetVolume(stat_n_ * pow(resolution_, 3), 3);  // volume moved to ch3
         }
     }
     else{

@@ -5,6 +5,12 @@ void MurderFSM::init(const ros::NodeHandle &nh, const ros::NodeHandle &nh_privat
     std::string ns = ros::this_node::getName();
     nh_private.param(ns + "/EXP/finish_hold_duration", finish_hold_duration_, 10.0);
     trigger_sub_ = nh_.subscribe("/start_trigger", 1, &MurderFSM::TriggerCallback, this);
+    // master-trigger clock anchor: MurderFSM::start_t_ follows the statistics t=0
+    takeoff_clock_sub_ = nh_.subscribe("/takeoff", 1, &MurderFSM::TakeoffClockCallback, this);
+
+    // flown-distance logging (ch4), mirrors FAME/RACER
+    len_odom_sub_ = nh_.subscribe("/odom", 10, &MurderFSM::LenOdomCallback, this);
+    traj_length_timer_ = nh.createTimer(ros::Duration(0.1), &MurderFSM::TrajLengthTimerCallback, this);
 
     fsm_timer_ = nh.createTimer(ros::Duration(0.01), &MurderFSM::FSMCallback, this);
     M_planner_.init(nh, nh_private);
@@ -25,6 +31,11 @@ void MurderFSM::ChangeState(const M_State &state){
 void MurderFSM::TriggerCallback(const std_msgs::EmptyConstPtr &msg){
     start_trigger_ = true;
     exploring_ = true;
+    // start_t_ is anchored by TakeoffClockCallback on /takeoff (t=0);
+    // do not overwrite it with the post-takeoff time here.
+}
+
+void MurderFSM::TakeoffClockCallback(const std_msgs::EmptyConstPtr &msg){
     start_t_ = ros::WallTime::now().toSec();
 }
 
@@ -91,6 +102,11 @@ void MurderFSM::FSMCallback(const ros::TimerEvent &e){
             break;
         }
         case M_State::FINISH :{
+            // one-shot finish marker, same as FAME/RACER ch6
+            if(!finish_recorded_ && M_planner_.SDM_.statistic_){
+                finish_recorded_ = true;
+                M_planner_.SDM_.CS_.SetVolume(0.0, 5);
+            }
             if(ros::WallTime::now().toSec() - start_t_ > 20.0) M_planner_.BroadCastFinish();
             if(ap == 2){                                       //traj is still free, wait till reach free place
                 M_planner_.SetPlanInterval(0.009);
@@ -192,3 +208,30 @@ void MurderFSM::FSMCallback(const ros::TimerEvent &e){
     }
 }
 
+
+void MurderFSM::LenOdomCallback(const nav_msgs::OdometryConstPtr &msg){
+    len_pos_(0) = msg->pose.pose.position.x;
+    len_pos_(1) = msg->pose.pose.position.y;
+    len_pos_(2) = msg->pose.pose.position.z;
+}
+
+void MurderFSM::TrajLengthTimerCallback(const ros::TimerEvent &e){
+    if(!have_len_pos_){
+        have_len_pos_ = true;
+        last_len_log_time_ = ros::Time::now();
+        return;
+    }
+    // path length is integrated from consecutive odometry samples; jumps
+    // (sim resets) are ignored
+    Eigen::Vector3d last = len_pos_;
+    static Eigen::Vector3d prev = last;
+    const double step = (last - prev).norm();
+    if(step < 1.0) traj_length_ += step;
+    prev = last;
+
+    if(M_planner_.SDM_.statistic_ && exploring_ &&
+        (ros::Time::now() - last_len_log_time_).toSec() >= 2.0){
+        M_planner_.SDM_.CS_.SetVolume(traj_length_, 4);
+        last_len_log_time_ = ros::Time::now();
+    }
+}

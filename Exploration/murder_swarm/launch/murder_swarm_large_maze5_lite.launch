@@ -1,0 +1,964 @@
+<launch>
+  <arg name="world" default="large_maze" />
+  <arg name="gui" default="true" />
+  <arg name="drone_num" value="5" />
+
+  <!-- <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find multisim_gazebo)/worlds/$(arg world).world" />
+    <arg name="use_sim_time" value="true"/>
+    <arg name="paused" value="false"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include> -->
+
+<node pkg="rosbag" type="record" name="bag_record" args="
+  /mapping_pose_1
+  /mapping_pose_2
+  /mapping_pose_3
+  /mapping_pose_4
+  /mapping_pose_5
+  /mapping_pose_6
+  /mapping_pose_7
+  /mapping_pose_8
+  /mapping_pose_9
+  /mapping_pose_10
+  /mapping_pose_11
+  /mapping_pose_12
+  /mapping_pose_13
+  /mapping_pose_14
+  /mapping_pose_15
+  /take_off
+  -o /home/charliedog/data/swarm_cd/gvp/large_maze/bags/5/gvp.bag"/>
+  <include file="$(find swarm_exp_bridge)/launch/local_tcp.launch">
+    <arg name="sim_id" value="1" />
+    <arg name="sim_num" value="$(arg drone_num)" />
+  </include>
+
+  <!-- bandwidth statistics, clock starts on /takeoff -->
+  <include file="$(find bw_statistic)/launch/bw_statistics.launch">
+    <arg name="drone_num" value="$(arg drone_num)" />
+    <arg name="world" value="$(arg world)" />
+  </include>
+
+  <include file="$(find murder_swarm)/launch/murder_ground_demo.launch">
+    <arg name="id" value="0"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="drone_num" value="$(arg drone_num)" />
+  </include>
+
+  <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find murder_swarm)/rviz/murder_swarm_local.rviz"/> -->
+  <node name="rvizvisualisation" pkg="rviz" type="rviz" output="screen" args="-d $(find murder_swarm)/rviz/ground_demo.rviz"/>
+
+  <node pkg ="map_generator" name ="map_pub" type ="map_pub" output = "screen" args="$(find map_generator)/resource/$(arg world).pcd"/>    
+
+
+
+ 
+
+  <!-- 100-drone grid formation (5 per row, 20 rows), identical across
+       FAME/RACER/GVP: drone 3 at (0,0): x=row*spacing, y=(col-2)*spacing (row 1-5 on y-axis).
+       Translate the whole formation with offset_x/y/z. -->
+  <arg name="spacing" default="1.5" />
+  <arg name="offset_x" default="0.0" />
+  <arg name="offset_y" default="0.0" />
+  <arg name="offset_z" default="0.0" />
+
+ <include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 1)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="1"/>
+    <arg name="init_x"   value="$(eval (0*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 2)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="2"/>
+    <arg name="init_x"   value="$(eval (0*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 3)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="3"/>
+    <arg name="init_x"   value="$(eval (0*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 4)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="4"/>
+    <arg name="init_x"   value="$(eval (0*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 5)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="5"/>
+    <arg name="init_x"   value="$(eval (0*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 6)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="6"/>
+    <arg name="init_x"   value="$(eval (1*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 7)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="7"/>
+    <arg name="init_x"   value="$(eval (1*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 8)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="8"/>
+    <arg name="init_x"   value="$(eval (1*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 9)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="9"/>
+    <arg name="init_x"   value="$(eval (1*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 10)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="10"/>
+    <arg name="init_x"   value="$(eval (1*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 11)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="11"/>
+    <arg name="init_x"   value="$(eval (2*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 12)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="12"/>
+    <arg name="init_x"   value="$(eval (2*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 13)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="13"/>
+    <arg name="init_x"   value="$(eval (2*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 14)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="14"/>
+    <arg name="init_x"   value="$(eval (2*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 15)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="15"/>
+    <arg name="init_x"   value="$(eval (2*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 16)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="16"/>
+    <arg name="init_x"   value="$(eval (3*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 17)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="17"/>
+    <arg name="init_x"   value="$(eval (3*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 18)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="18"/>
+    <arg name="init_x"   value="$(eval (3*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 19)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="19"/>
+    <arg name="init_x"   value="$(eval (3*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 20)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="20"/>
+    <arg name="init_x"   value="$(eval (3*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 21)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="21"/>
+    <arg name="init_x"   value="$(eval (4*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 22)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="22"/>
+    <arg name="init_x"   value="$(eval (4*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 23)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="23"/>
+    <arg name="init_x"   value="$(eval (4*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 24)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="24"/>
+    <arg name="init_x"   value="$(eval (4*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 25)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="25"/>
+    <arg name="init_x"   value="$(eval (4*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 26)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="26"/>
+    <arg name="init_x"   value="$(eval (5*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 27)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="27"/>
+    <arg name="init_x"   value="$(eval (5*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 28)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="28"/>
+    <arg name="init_x"   value="$(eval (5*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 29)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="29"/>
+    <arg name="init_x"   value="$(eval (5*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 30)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="30"/>
+    <arg name="init_x"   value="$(eval (5*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 31)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="31"/>
+    <arg name="init_x"   value="$(eval (6*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 32)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="32"/>
+    <arg name="init_x"   value="$(eval (6*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 33)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="33"/>
+    <arg name="init_x"   value="$(eval (6*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 34)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="34"/>
+    <arg name="init_x"   value="$(eval (6*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 35)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="35"/>
+    <arg name="init_x"   value="$(eval (6*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 36)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="36"/>
+    <arg name="init_x"   value="$(eval (7*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 37)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="37"/>
+    <arg name="init_x"   value="$(eval (7*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 38)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="38"/>
+    <arg name="init_x"   value="$(eval (7*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 39)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="39"/>
+    <arg name="init_x"   value="$(eval (7*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 40)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="40"/>
+    <arg name="init_x"   value="$(eval (7*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 41)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="41"/>
+    <arg name="init_x"   value="$(eval (8*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 42)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="42"/>
+    <arg name="init_x"   value="$(eval (8*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 43)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="43"/>
+    <arg name="init_x"   value="$(eval (8*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 44)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="44"/>
+    <arg name="init_x"   value="$(eval (8*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 45)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="45"/>
+    <arg name="init_x"   value="$(eval (8*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 46)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="46"/>
+    <arg name="init_x"   value="$(eval (9*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 47)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="47"/>
+    <arg name="init_x"   value="$(eval (9*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 48)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="48"/>
+    <arg name="init_x"   value="$(eval (9*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 49)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="49"/>
+    <arg name="init_x"   value="$(eval (9*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 50)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="50"/>
+    <arg name="init_x"   value="$(eval (9*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 51)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="51"/>
+    <arg name="init_x"   value="$(eval (10*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 52)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="52"/>
+    <arg name="init_x"   value="$(eval (10*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 53)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="53"/>
+    <arg name="init_x"   value="$(eval (10*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 54)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="54"/>
+    <arg name="init_x"   value="$(eval (10*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 55)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="55"/>
+    <arg name="init_x"   value="$(eval (10*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 56)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="56"/>
+    <arg name="init_x"   value="$(eval (11*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 57)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="57"/>
+    <arg name="init_x"   value="$(eval (11*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 58)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="58"/>
+    <arg name="init_x"   value="$(eval (11*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 59)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="59"/>
+    <arg name="init_x"   value="$(eval (11*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 60)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="60"/>
+    <arg name="init_x"   value="$(eval (11*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 61)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="61"/>
+    <arg name="init_x"   value="$(eval (12*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 62)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="62"/>
+    <arg name="init_x"   value="$(eval (12*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 63)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="63"/>
+    <arg name="init_x"   value="$(eval (12*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 64)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="64"/>
+    <arg name="init_x"   value="$(eval (12*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 65)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="65"/>
+    <arg name="init_x"   value="$(eval (12*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 66)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="66"/>
+    <arg name="init_x"   value="$(eval (13*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 67)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="67"/>
+    <arg name="init_x"   value="$(eval (13*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 68)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="68"/>
+    <arg name="init_x"   value="$(eval (13*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 69)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="69"/>
+    <arg name="init_x"   value="$(eval (13*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 70)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="70"/>
+    <arg name="init_x"   value="$(eval (13*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 71)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="71"/>
+    <arg name="init_x"   value="$(eval (14*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 72)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="72"/>
+    <arg name="init_x"   value="$(eval (14*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 73)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="73"/>
+    <arg name="init_x"   value="$(eval (14*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 74)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="74"/>
+    <arg name="init_x"   value="$(eval (14*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 75)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="75"/>
+    <arg name="init_x"   value="$(eval (14*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 76)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="76"/>
+    <arg name="init_x"   value="$(eval (15*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 77)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="77"/>
+    <arg name="init_x"   value="$(eval (15*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 78)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="78"/>
+    <arg name="init_x"   value="$(eval (15*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 79)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="79"/>
+    <arg name="init_x"   value="$(eval (15*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 80)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="80"/>
+    <arg name="init_x"   value="$(eval (15*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 81)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="81"/>
+    <arg name="init_x"   value="$(eval (16*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 82)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="82"/>
+    <arg name="init_x"   value="$(eval (16*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 83)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="83"/>
+    <arg name="init_x"   value="$(eval (16*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 84)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="84"/>
+    <arg name="init_x"   value="$(eval (16*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 85)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="85"/>
+    <arg name="init_x"   value="$(eval (16*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 86)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="86"/>
+    <arg name="init_x"   value="$(eval (17*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 87)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="87"/>
+    <arg name="init_x"   value="$(eval (17*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 88)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="88"/>
+    <arg name="init_x"   value="$(eval (17*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 89)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="89"/>
+    <arg name="init_x"   value="$(eval (17*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 90)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="90"/>
+    <arg name="init_x"   value="$(eval (17*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 91)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="91"/>
+    <arg name="init_x"   value="$(eval (18*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 92)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="92"/>
+    <arg name="init_x"   value="$(eval (18*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 93)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="93"/>
+    <arg name="init_x"   value="$(eval (18*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 94)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="94"/>
+    <arg name="init_x"   value="$(eval (18*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 95)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="95"/>
+    <arg name="init_x"   value="$(eval (18*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 96)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="96"/>
+    <arg name="init_x"   value="$(eval (19*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 97)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="97"/>
+    <arg name="init_x"   value="$(eval (19*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (-1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 98)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="98"/>
+    <arg name="init_x"   value="$(eval (19*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (0*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 99)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="99"/>
+    <arg name="init_x"   value="$(eval (19*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (1*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+
+<include file="$(find murder_swarm)/launch/murder_single_lite.launch" if="$(eval arg('drone_num') >= 100)">
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="world" value="$(arg world)"/>
+    <arg name="id" value="100"/>
+    <arg name="init_x"   value="$(eval (19*arg('spacing') + arg('offset_x')))"/>
+    <arg name="init_y"   value="$(eval (2*arg('spacing') + arg('offset_y')))"/>
+    <arg name="init_z"   value="$(eval (arg('offset_z')))"/>
+  </include>
+</launch>

@@ -903,14 +903,14 @@ void GraphVoronoiPartition::StateTimerCallback(const ros::TimerEvent &e){
 
 void GraphVoronoiPartition::PartitionTimerCallback(const ros::TimerEvent &e){
     cout<<"\033[0;44m id:"<<int(SDM_->self_id_)<<" Partition\033[0m"<<endl;
-    if(SDM_->statistic_) SDM_->CS_.StartTimer(0);
+    const double ts_partition = SDM_->statistic_ ? ros::WallTime::now().toSec() : 0.0;
     if(!SDM_->is_ground_){
         ROS_WARN("id:%d LocalGVP!", SDM_->self_id_);
          LocalGVP();
     }
 
     GlobalGVP();
-    if(SDM_->statistic_) SDM_->CS_.EndTimer(0);
+    if(SDM_->statistic_) SDM_->CS_.SetVolume(ros::WallTime::now().toSec() - ts_partition, 0);
     // ROS_WARN("id:%d PartitionTimerCallback!", SDM_->self_id_);
     // cout<<"local_fn_:"<<local_fn_->size()<<"  local_hn_:"<<local_hn_->size()<<"  GVP_hn_:"<<GVP_hn_->size()<<endl;
     /* partition send */

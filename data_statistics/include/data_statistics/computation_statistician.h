@@ -14,12 +14,12 @@ public:
                     // oft_list_[i]<<"max:"<<max_list_[i]<<endl;
         double v = 0;
         for(int i = 0; i < vdata_size_ - 1; i++){
-            if(i > 0) v += volume_list_[i];
-            ofvdata_list_.back()<<vname_list_[i]+":"<<to_string(volume_list_[i])<<endl;
+            // if(i > 0) v += volume_list_[i];
+            // ofvdata_list_.back()<<vname_list_[i]+":"<<to_string(volume_list_[i])<<endl;
             ofvdata_list_[i].close();
 		    ofvt_list_[i].close();
         }
-        ofvdata_list_.back()<<to_string(v)<<endl;
+        // ofvdata_list_.back()<<to_string(v)<<endl;
         ofvt_list_.back().close();
         ofvdata_list_.back().close();
 
@@ -32,17 +32,19 @@ public:
         }
     };
     void init(ros::NodeHandle &nh, ros::NodeHandle &nh_private); 
+    void init(int id, int num, int vdata_size, string dir, vector<std::string> vname_list); 
     void StartTimer(int dataid);
     void EndTimer(int dataid);
     void AddVolume(double v, int id);
     void SetVolume(double v, int id);
+    void SetVolume(uint64_t v, int id);
 
     // void ShowTotalCost(int dataid);
     // void ShowCost(int dataid);
     // void ShowAllCost();
     string dir_;
-private:
     double start_t_;
+private:
     vector<double> cost_list_;              //total cost
     vector<double> max_list_;
     vector<double> cost_temp_list_;       

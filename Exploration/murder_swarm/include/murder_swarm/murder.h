@@ -24,6 +24,7 @@
 #include <swarm_exp_msgs/LocalTraj.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Image.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -142,7 +143,7 @@ private:
     FrontierGrid FG_;
     ColorManager CM_;
 
-    ros::Publisher show_pub_, traj_pub_, posevis_pub_;
+    ros::Publisher show_pub_, traj_pub_, posevis_pub_, pose_map_update_;
     ros::Subscriber odom_sub_;
     ros::NodeHandle nh_, nh_private_;
 
